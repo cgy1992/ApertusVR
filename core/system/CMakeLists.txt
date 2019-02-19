@@ -38,15 +38,27 @@ include_directories(
 
 add_library (ApeSystem SHARED ${SOURCES} )
 
+# Link with dependency libraries and add preprocessor definitions with lists
+set(APE_LINK_LIBS_SYSTEM
+	ApePluginManager
+	ApeEventManager
+	ApeLogManager
+	ApeSceneManager
+	ApeSystemConfig
+	ApeMainWindow
+	)
+
 # Link with dependency libraries
 if(WIN32)
-	target_link_libraries (ApeSystem ApePluginManager ApeEventManager ApeLogManager ApeSceneManager ApeSystemConfig ApeMainWindow RAKNET ws2_32)
-endif()
+	list(APPEND APE_LINK_LIBS_SYSTEM ws2_32)
+	list(APPEND APE_LINK_LIBS_SCENEMANAGER RAKNET)
+elseif (APPLE)
+	list(APPEND APE_LINK_LIBS_SCENEMANAGER RAKNET)
+elseif (LINUX)
+	list(APPEND APE_LINK_LIBS_SCENEMANAGER ${RAKNET_STATIC_LIB_PATH_RELEASE})
+endif ()
 
-if(APPLE)
-	target_link_libraries (ApeSystem ApePluginManager ApeEventManager ApeLogManager ApeSceneManager ApeSystemConfig ApeMainWindow RAKNET)
-endif()
-
+target_link_libraries(ApeSystem ${APE_LINK_LIBS_SYSTEM})
 
 # Place target xxx into the specified folder in IDEs supporting it
 set_property (TARGET ApeSystem PROPERTY COMPILE_DEFINITIONS BUILDING_APE_SYSTEM_DLL)

@@ -30,7 +30,7 @@ SOFTWARE.*/
 #include <vector>
 #ifdef _WIN32
 	#include "../../../3rdParty/dirent/dirent.h"
-#elif
+#else
 	#include <dirent.h>
 #endif
 

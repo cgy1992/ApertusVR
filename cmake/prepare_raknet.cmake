@@ -11,10 +11,12 @@ set (RAKNET_BUILD_DIR ${RAKNET_SRC_DIR}/build)
 set (RAKNET_INSTALL_DIR ${RAKNET_SRC_DIR}/install)
 set (RAKNET_READY FALSE)
 
+message(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
 # solve a *nix/64bit processor speciality
-if (LINUX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
-    set(EXTRA_COMPILE_OPTIONS -fPIC)
-endif ()
+# if (LINUX AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+#	message(STATUS "Set Extra Compile Option -fPIC for RAKNET Linux x64 build")
+#    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+# endif ()
 
 # find raknet
 if (WIN32)
@@ -44,6 +46,11 @@ endif ()
 
 if (NOT RAKNET_READY)
 	# build raknet
+
+	if (LINUX_X64)
+		set(EXTRA_COMPILE_OPTIONS "-fPIC")
+	endif ()
+
 	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
 		message (STATUS "Configuring raknet for ${CONF}, please wait.....")
 		execute_process (
@@ -72,7 +79,10 @@ if (NOT RAKNET_READY)
 endif ()
 
 # use raknet
-add_library(RAKNET STATIC IMPORTED)
+add_library(RAKNET STATIC IMPORTED GLOBAL)
 set_property(TARGET RAKNET PROPERTY IMPORTED_LOCATION_DEBUG ${RAKNET_STATIC_LIB_PATH_DEBUG})
 set_property(TARGET RAKNET PROPERTY IMPORTED_LOCATION_RELEASE ${RAKNET_STATIC_LIB_PATH_RELEASE})
+if (LINUX_X64)
+	set_property(TARGET RAKNET PROPERTY POSITION_INDEPENDENT_CODE ON)
+endif ()
 set(RAKNET_INCLUDE_DIR ${RAKNET_HOME}/Source)

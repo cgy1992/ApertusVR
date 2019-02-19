@@ -4,6 +4,14 @@ project(RakNet)
 
 add_definitions(-std=c++11)
 
+# solve a *nix/64bit processor speciality
+if (UNIX AND NOT APPLE)
+	if (CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+		message(STATUS "Add -fPIC flag to CMAKE_CXX_FLAGS on Linux x64 build")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+	endif ()
+endif ()
+
 if( NOT APPLE )
 # check 64 bit
 if( CMAKE_SIZEOF_VOID_P MATCHES "4" )

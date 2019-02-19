@@ -28,14 +28,70 @@ set (ASSIMP_HOME ${CMAKE_SOURCE_DIR}/3rdParty/assimp)
 set (ASSIMP_READY FALSE)
 
 
+if (WIN32 OR APPLE)
+
+	set(ASSIMP_OUTPUT_FILE_NAME "assimp-vc140-mt")
+	set(ASSIMP_OUTPUT_FILE_NAME_STATIC "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_STATIC}")
+	set(ASSIMP_OUTPUT_FILE_NAME_SHARED "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(ASSIMP_STATIC_LIB_PATH_DEBUG "${ASSIMP_HOME}/lib/Debug/${ASSIMP_OUTPUT_FILE_NAME_STATIC}")
+	set(ASSIMP_STATIC_LIB_PATH_RELEASE "${ASSIMP_HOME}/lib/Release/${ASSIMP_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(ASSIMP_SHARED_LIB_PATH_DEBUG "${ASSIMP_HOME}/bin/Debug/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+	set(ASSIMP_SHARED_LIB_PATH_RELEASE "${ASSIMP_HOME}/bin/Release/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for shared
+	set(ASSIMP_SHARED_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+	set(ASSIMP_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+elseif (APPLE)
+
+	set(ASSIMP_OUTPUT_FILE_NAME "libassimp")
+	set(ASSIMP_OUTPUT_FILE_NAME_STATIC "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_STATIC}")
+	set(ASSIMP_OUTPUT_FILE_NAME_SHARED "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(ASSIMP_STATIC_LIB_PATH_DEBUG "${ASSIMP_HOME}/lib/Debug/${ASSIMP_OUTPUT_FILE_NAME_STATIC}")
+	set(ASSIMP_STATIC_LIB_PATH_RELEASE "${ASSIMP_HOME}/lib/Release/${ASSIMP_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(ASSIMP_SHARED_LIB_PATH_DEBUG "${ASSIMP_HOME}/bin/Debug/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+	set(ASSIMP_SHARED_LIB_PATH_RELEASE "${ASSIMP_HOME}/bin/Release/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for shared
+	set(ASSIMP_SHARED_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+	set(ASSIMP_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+elseif (LINUX)
+
+	set(ASSIMP_OUTPUT_FILE_NAME "libassimp")
+	set(ASSIMP_OUTPUT_FILE_NAME_STATIC "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_STATIC}")
+	set(ASSIMP_OUTPUT_FILE_NAME_SHARED "${ASSIMP_OUTPUT_FILE_NAME}${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(ASSIMP_STATIC_LIB_PATH_RELEASE "${ASSIMP_HOME}/lib/${ASSIMP_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(ASSIMP_SHARED_LIB_PATH_RELEASE "${ASSIMP_HOME}/lib/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for shared
+	set(ASSIMP_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR}/${ASSIMP_OUTPUT_FILE_NAME_SHARED}")
+
+endif ()
+
+
 #error function
 function (reportError what and when)
 	if (${${when}})
 		message (${${what}})
 	endif ()
 endfunction ()
+
 #find assimp
-if(EXISTS ${ASSIMP_HOME}/lib/Debug/assimp-vc140-mt.lib AND EXISTS ${ASSIMP_HOME}/lib/Release/assimp-vc140-mt.lib)
+message(STATUS "ASSIMP_STATIC_LIB_PATH_RELEASE: ${ASSIMP_STATIC_LIB_PATH_RELEASE}")
+if(EXISTS ${ASSIMP_STATIC_LIB_PATH_RELEASE})
 	set(ASSIMP_READY TRUE)
 	message (STATUS "assimp is installed" )
 else ()
@@ -49,6 +105,8 @@ if (NOT ASSIMP_READY)
 		execute_process ( 
 				COMMAND ${CMAKE_COMMAND} 
 				-G ${CMAKE_GENERATOR} 
+				-DBUILD_SHARED_LIBS=OFF
+				-DASSIMP_BUILD_TESTS=OFF
 				.
 				WORKING_DIRECTORY ${ASSIMP_HOME}
 				RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
@@ -56,7 +114,7 @@ if (NOT ASSIMP_READY)
 		reportError (output if error)
 		message (STATUS "Building assimp for ${CONF}, please wait.....")
 		execute_process ( 
-			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target ALL_BUILD
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF}
 			WORKING_DIRECTORY ${ASSIMP_HOME}
 			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
 		reportError (output if error)
@@ -64,10 +122,8 @@ if (NOT ASSIMP_READY)
 endif ()
 #use assimp
 add_library(MY_ASSIMP STATIC IMPORTED)
-if (WIN32)
-	set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_DEBUG ${ASSIMP_HOME}/lib/Debug/assimp-vc140-mt.lib)
-	set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_RELEASE ${ASSIMP_HOME}/lib/Release/assimp-vc140-mt.lib)
-endif ()
+set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_DEBUG ${ASSIMP_STATIC_LIB_PATH_DEBUG})
+set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_RELEASE ${ASSIMP_STATIC_LIB_PATH_RELEASE})
 
 #ApeAssimpAssetLoaderPlugin
 set (HEADERS
@@ -89,23 +145,27 @@ add_library (ApeAssimpAssetLoaderPlugin SHARED ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
 set_property (TARGET ApeAssimpAssetLoaderPlugin PROPERTY COMPILE_DEFINITIONS APE_BIN_DIR="${APE_BIN_DIR}" APE_SOURCE_DIR="${APE_SOURCE_DIR}")
-target_link_libraries (ApeAssimpAssetLoaderPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow MY_ASSIMP)
+
+if (LINUX)
+	target_link_libraries (ApeAssimpAssetLoaderPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow ${ASSIMP_STATIC_LIB_PATH_RELEASE})
+else ()
+	target_link_libraries (ApeAssimpAssetLoaderPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow MY_ASSIMP)
+endif ()
 
 # Place target xxx into the specified folder in IDEs supporting it
 set_property (TARGET ApeAssimpAssetLoaderPlugin PROPERTY FOLDER "Plugins")
 
-if (WIN32)
-	# todo are there any solution for doing this platform idependent way? maybe ogre install? sdk?
-	# Copying the assimp bins to the desired place
-	# debug dlls
-	if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug/assimp-vc140-mt.dll)
-		file(COPY ${ASSIMP_HOME}/bin/Debug/assimp-vc140-mt.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug)
+foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+	if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_${CONF}})
+		file(COPY ${ASSIMP_SHARED_LIB_PATH_${CONF}} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONF})
 	endif()
-	# release dlls
-	if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release/assimp-vc140-mt.dll)
-		file(COPY ${ASSIMP_HOME}/bin/Release/assimp-vc140-mt.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release)
-	endif()
-endif ()
+endforeach ()
 
-
-
+# debug dlls
+# if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_DEBUG})
+# 	file(COPY ${ASSIMP_SHARED_LIB_PATH_DEBUG} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug)
+# endif()
+# release dlls
+# if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_RELEASE})
+# 	file(COPY ${ASSIMP_SHARED_LIB_PATH_RELEASE} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release)
+# endif()
