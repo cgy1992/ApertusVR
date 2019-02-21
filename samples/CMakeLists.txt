@@ -189,3 +189,8 @@ option(APE_SAMPLES_Polimi "APE_SAMPLES_Polimi?" OFF )
 if (${APE_SAMPLES_Polimi})
 	add_subdirectory (polimi)
 endif ()
+
+option(APE_SAMPLES_CoreSyncTest "APE_SAMPLES_CoreSyncTest?" ON )
+if (${APE_SAMPLES_CoreSyncTest})
+	add_subdirectory (coreSyncTest)
+endif ()

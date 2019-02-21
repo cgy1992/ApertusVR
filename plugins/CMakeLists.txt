@@ -234,3 +234,8 @@ option(APE_PLUGIN_PolimiPlugin "Use PolimiPlugin?" OFF )
 if (${APE_PLUGIN_PolimiPlugin})
 	add_subdirectory (polimi)
 endif ()
+
+option(APE_PLUGIN_CoreSyncTest "Use CoreSyncTestPlugin?" ON )
+if (${APE_PLUGIN_CoreSyncTest})
+	add_subdirectory (coreSyncTest)
+endif ()
