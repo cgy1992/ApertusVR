@@ -23,6 +23,9 @@ SOFTWARE.*/
 #ifndef ${pluginHeaderName}
 #define ${pluginHeaderName}
 
+#include <chrono>
+#include <thread>
+
 #include "plugin/ApePluginAPI.h"
 #include "managers/ApeIEventManager.h"
 #include "managers/ApeILogManager.h"
