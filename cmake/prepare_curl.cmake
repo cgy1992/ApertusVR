@@ -1,118 +1,118 @@
-# cUrl
-if (WIN32)
-	set (CURL_READY FALSE)
+# curl
+set(CURL_READY FALSE)
+set(CURL_SOURCE_DIR ${APE_SOURCE_DIR}/3rdParty/curl)
+set(CURL_INCLUDE_DIRS ${CURL_SOURCE_DIR}/include/)
 
-	set(CURL_SOURCE_DIR ${APE_SOURCE_DIR}/3rdParty/curl)
-	set(CURL_INCLUDE_DIRS ${CURL_SOURCE_DIR}/include/)
 
-	set(CURL_DLL_FILENAME libcurl.dll)
-	set(CURL_LIB_FILENAME libcurl_imp.lib)
+# set variables according to platforms
+if (WIN32 OR APPLE)
 
-	set(CURL_DLL_PATH_DEBUG ${CURL_SOURCE_DIR}/lib/Debug/${CURL_DLL_FILENAME})
-	set(CURL_DLL_PATH_RELEASE ${CURL_SOURCE_DIR}/lib/Release/${CURL_DLL_FILENAME})
-	set(CURL_DLL_OUTPUT_PATH_DEBUG ${APE_OUTPUT_DIR_DEBUG}/${CURL_DLL_FILENAME})
-	set(CURL_DLL_OUTPUT_PATH_RELEASE ${APE_OUTPUT_DIR_RELEASE}/${CURL_DLL_FILENAME})
+	message (STATUS "Curl: prepare on Windows")
 
-	set(CURL_LIB_PATH_DEBUG ${CURL_SOURCE_DIR}/lib/Debug/${CURL_LIB_FILENAME})
-	set(CURL_LIB_PATH_RELEASE ${CURL_SOURCE_DIR}/lib/Release/${CURL_LIB_FILENAME})
-	set(CURL_LIB_OUTPUT_PATH_DEBUG ${APE_OUTPUT_DIR_DEBUG}/${CURL_LIB_FILENAME})
-	set(CURL_LIB_OUTPUT_PATH_RELEASE ${APE_OUTPUT_DIR_RELEASE}/${CURL_LIB_FILENAME})
+	set(CURL_OUTPUT_FILE_NAME_STATIC "libcurl_imp${APE_FILE_EXT_STATIC}")
+	set(CURL_OUTPUT_FILE_NAME_SHARED "libcurl${APE_FILE_EXT_SHARED}")
 
-	if (EXISTS ${CURL_LIB_PATH_DEBUG} AND EXISTS ${CURL_DLL_PATH_RELEASE})
+	# static
+	set(CURL_STATIC_LIB_PATH_DEBUG "${CURL_SOURCE_DIR}/lib/Debug/${CURL_OUTPUT_FILE_NAME_STATIC}")
+	set(CURL_STATIC_LIB_PATH_RELEASE "${CURL_SOURCE_DIR}/lib/Release/${CURL_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(CURL_SHARED_LIB_PATH_DEBUG "${CURL_SOURCE_DIR}/lib/Debug/${CURL_OUTPUT_FILE_NAME_SHARED}")
+	set(CURL_SHARED_LIB_PATH_RELEASE "${CURL_SOURCE_DIR}/lib/Release/${CURL_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for static
+	set(CURL_STATIC_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${CURL_OUTPUT_FILE_NAME_STATIC}")
+	set(CURL_STATIC_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${CURL_OUTPUT_FILE_NAME_STATIC}")
+
+	# output for shared
+	set(CURL_SHARED_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${CURL_OUTPUT_FILE_NAME_SHARED}")
+	set(CURL_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${CURL_OUTPUT_FILE_NAME_SHARED}")
+
+elseif (LINUX)
+
+	message (STATUS "Curl: prepare on Linux")
+
+	set(CURL_OUTPUT_FILE_NAME_STATIC "libcurl_imp${APE_FILE_EXT_STATIC}")
+	set(CURL_OUTPUT_FILE_NAME_SHARED "libcurl${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(CURL_STATIC_LIB_PATH_DEBUG "${CURL_SOURCE_DIR}/lib/${CURL_OUTPUT_FILE_NAME_STATIC}")
+	set(CURL_STATIC_LIB_PATH_RELEASE "${CURL_SOURCE_DIR}/lib/${CURL_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(CURL_SHARED_LIB_PATH_DEBUG "${CURL_SOURCE_DIR}/lib/${CURL_OUTPUT_FILE_NAME_SHARED}")
+	set(CURL_SHARED_LIB_PATH_RELEASE "${CURL_SOURCE_DIR}/lib/${CURL_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for static
+	set(CURL_STATIC_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR}/${CURL_OUTPUT_FILE_NAME_STATIC}")
+	set(CURL_STATIC_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR}/${CURL_OUTPUT_FILE_NAME_STATIC}")
+
+	# output for shared
+	set(CURL_SHARED_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR}/${CURL_OUTPUT_FILE_NAME_SHARED}")
+	set(CURL_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR}/${CURL_OUTPUT_FILE_NAME_SHARED}")
+
+endif ()
+
+
+# check curl output libraries
+if (WIN32 OR APPLE)
+	if (EXISTS ${CURL_STATIC_LIB_PATH_DEBUG} AND EXISTS ${CURL_STATIC_LIB_PATH_RELEASE}
+		AND EXISTS ${CURL_SHARED_LIB_PATH_DEBUG} AND EXISTS ${CURL_SHARED_LIB_PATH_RELEASE})
 		set(CURL_READY TRUE)
-		message(STATUS "curl is installed" )
+		message(STATUS "Curl: curl libraries are installed" )
 	else ()
 		set(CURL_READY FALSE)
-		message(STATUS "curl is not installed" )
-	endif ()
-
-	if (NOT CURL_READY)
-		# build curl
-		foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
-			message(STATUS "Configuring curl for ${CONF}, please wait.....")
-			execute_process(
-					COMMAND ${CMAKE_COMMAND}
-					-G ${CMAKE_GENERATOR}
-					.
-					WORKING_DIRECTORY ${CURL_SOURCE_DIR}
-					RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
-					)
-			reportError(output if error)
-			message(STATUS "Building curl for ${CONF}, please wait.....")
-			execute_process(
-				COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target ALL_BUILD
-				WORKING_DIRECTORY ${CURL_SOURCE_DIR}
-				RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
-			reportError(output if error)
-		endforeach ()
-	endif ()
-
-	# use curl
-	add_library(MY_CURL STATIC IMPORTED)
-	set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_DEBUG ${CURL_LIB_PATH_DEBUG})
-	set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_RELEASE ${CURL_LIB_PATH_RELEASE})
-
-	if (NOT EXISTS ${CURL_DLL_PATH_DEBUG})
-		message(FATAL_ERROR "Could not find ${CURL_DLL_PATH_DEBUG}")
-	endif ()
-	if (NOT EXISTS ${CURL_DLL_OUTPUT_PATH_DEBUG})
-		file(COPY ${CURL_DLL_PATH_DEBUG} DESTINATION ${APE_OUTPUT_DIR_DEBUG})
-	else ()
-		message(STATUS "curl: ${CURL_DLL_OUTPUT_PATH_DEBUG} already exists. Skipping copy.")
-	endif ()
-
-	if (NOT EXISTS ${CURL_DLL_PATH_RELEASE})
-		message(FATAL_ERROR "Could not find ${CURL_DLL_PATH_RELEASE}")
-	endif ()
-	if (NOT EXISTS ${CURL_DLL_OUTPUT_PATH_RELASE})
-		file(COPY ${CURL_DLL_PATH_RELEASE} DESTINATION ${APE_OUTPUT_DIR_RELEASE})
-	else ()
-		message(STATUS "curl: ${CURL_DLL_OUTPUT_PATH_RELEASE} already exists. Skipping copy.")
-	endif ()
-
-	if (NOT EXISTS ${CURL_LIB_PATH_DEBUG})
-		message(FATAL_ERROR "Could not find ${CURL_LIB_PATH_DEBUG}")
-	endif ()
-	if (NOT EXISTS ${CURL_LIB_OUTPUT_PATH_DEBUG})
-		file(COPY ${CURL_LIB_PATH_DEBUG} DESTINATION ${APE_OUTPUT_DIR_DEBUG})
-	else ()
-		message(STATUS "curl: ${CURL_LIB_OUTPUT_PATH_DEBUG} already exists. Skipping copy.")
-	endif ()
-
-	if (NOT EXISTS ${CURL_LIB_PATH_RELEASE})
-		message(FATAL_ERROR "Could not find ${CURL_LIB_PATH_RELEASE}")
-	endif ()
-	if (NOT EXISTS ${CURL_LIB_OUTPUT_PATH_RELEASE})
-		file(COPY ${CURL_LIB_PATH_RELEASE} DESTINATION ${APE_OUTPUT_DIR_RELEASE})
-	else ()
-		message(STATUS "curl: ${CURL_LIB_OUTPUT_PATH_RELEASE} already exists. Skipping copy.")
-	endif ()
-elseif (APPLE)
-	find_package(CURL REQUIRED)
-	include_directories(${CURL_INCLUDE_DIRS})
-	message(STATUS "curl dirs: ${CURL_INCLUDE_DIRS}")
-	message(STATUS "curl libs: ${CURL_LIBRARIES}")
-
-	if (${CURL_FOUND})
-		set(CURL_READY TRUE)
-		add_library(MY_CURL STATIC IMPORTED)
-		set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_DEBUG ${CURL_LIBRARIES})
-		set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_RELEASE ${CURL_LIBRARIES})
+		message(STATUS "Curl: curl libraries are not installed" )
 	endif ()
 elseif (LINUX)
-	#find_package(CURL REQUIRED)
-	set(CURL_SOURCE_DIR ${APE_SOURCE_DIR}/3rdParty/curl)
-	set(CURL_INCLUDE_DIRS ${CURL_SOURCE_DIR}/include/)
-	set(CURL_LIBRARIES /usr/bin/curl)
-
-	include_directories(${CURL_INCLUDE_DIRS})
-	message(STATUS "curl dirs: ${CURL_INCLUDE_DIRS}")
-	message(STATUS "curl libs: ${CURL_LIBRARIES}")
-
-	if (${CURL_FOUND})
+	if (EXISTS ${CURL_SHARED_LIB_PATH_DEBUG} AND EXISTS ${CURL_SHARED_LIB_PATH_RELEASE})
 		set(CURL_READY TRUE)
-		add_library(MY_CURL STATIC IMPORTED)
-		set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_DEBUG ${CURL_LIBRARIES})
-		set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_RELEASE ${CURL_LIBRARIES})
+		message(STATUS "Curl: curl libraries are installed" )
+	else ()
+		set(CURL_READY FALSE)
+		message(STATUS "Curl: curl libraries are not installed" )
 	endif ()
 endif ()
+
+
+# build curl
+if (NOT CURL_READY)
+
+	# call thirdparty's cmake to configure and build
+	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+		message(STATUS "Configuring curl for ${CONF}, please wait.....")
+		execute_process(
+				COMMAND ${CMAKE_COMMAND}
+				-G ${CMAKE_GENERATOR}
+				.
+				WORKING_DIRECTORY ${CURL_SOURCE_DIR}
+				RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
+				)
+		reportError(output if error)
+		message(STATUS "Building curl for ${CONF}, please wait.....")
+		execute_process(
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF}
+			WORKING_DIRECTORY ${CURL_SOURCE_DIR}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
+		reportError(output if error)
+	endforeach ()
+
+endif ()
+
+
+# create curl cmake library
+add_library(MY_CURL STATIC IMPORTED)
+set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_DEBUG ${CURL_STATIC_LIB_PATH_DEBUG})
+set_property(TARGET MY_CURL PROPERTY IMPORTED_LOCATION_RELEASE ${CURL_STATIC_LIB_PATH_RELEASE})
+
+# copy generated libraries to APE output dir
+foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+if(NOT EXISTS ${CURL_SHARED_LIB_PATH_APE_${CONF}})
+	file(COPY ${CURL_SHARED_LIB_PATH_${CONF}} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONF})
+endif()
+endforeach ()
+foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+if(NOT EXISTS ${CURL_STATIC_LIB_PATH_APE_${CONF}})
+	file(COPY ${CURL_STATIC_LIB_PATH_${CONF}} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONF})
+endif()
+endforeach ()
