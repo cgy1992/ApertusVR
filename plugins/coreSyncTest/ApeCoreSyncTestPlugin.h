@@ -23,10 +23,15 @@ SOFTWARE.*/
 #ifndef APE_CoreSyncTestPLUGIN_H
 #define APE_CoreSyncTestPLUGIN_H
 
+#include <sstream>
+#include "Ape.h"
+#include "datatypes/ApeEvent.h"
 #include "plugin/ApePluginAPI.h"
 #include "managers/ApeIEventManager.h"
 #include "managers/ApeILogManager.h"
 #include "managers/ApeISceneManager.h"
+#include "managers/ApeISystemConfig.h"
+#include "sceneelements/ApeITextGeometry.h"
 
 #define THIS_PLUGINNAME "ApeCoreSyncTestPlugin"
 
@@ -40,7 +45,13 @@ namespace Ape
 
 		Ape::ISceneManager* mpSceneManager;
 
-		void nodeEventCallBack(const Ape::Event& event);
+		Ape::ISystemConfig* mpSystemConfigManager;
+
+		std::string uniqueUserNamePrefix;
+
+		Ape::EntityWeakPtr mStatusText;
+
+		void eventCallBack(const Ape::Event& event);
 
 	public:
 		ApeCoreSyncTestPlugin();
