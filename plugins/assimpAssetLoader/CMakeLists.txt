@@ -24,10 +24,11 @@
 # In /3rdParty/assimp/code/X3DImporter.cpp std::transforms are commented out because of operator != problem
 # assimp patch log begin
 
-set (ASSIMP_HOME ${CMAKE_SOURCE_DIR}/3rdParty/assimp)
-set (ASSIMP_READY FALSE)
+set(ASSIMP_READY FALSE)
+set(ASSIMP_HOME ${CMAKE_SOURCE_DIR}/3rdParty/assimp)
 
 
+# set variables according to platforms
 if (WIN32 OR APPLE)
 
 	set(ASSIMP_OUTPUT_FILE_NAME "assimp-vc140-mt")
@@ -82,14 +83,7 @@ elseif (LINUX)
 endif ()
 
 
-#error function
-function (reportError what and when)
-	if (${${when}})
-		message (${${what}})
-	endif ()
-endfunction ()
-
-#find assimp
+# check assimp output libraries
 message(STATUS "ASSIMP_STATIC_LIB_PATH_RELEASE: ${ASSIMP_STATIC_LIB_PATH_RELEASE}")
 if(EXISTS ${ASSIMP_STATIC_LIB_PATH_RELEASE})
 	set(ASSIMP_READY TRUE)
@@ -98,8 +92,10 @@ else ()
 	set(ASSIMP_READY FALSE)
 	message (STATUS "assimp is not installed" )
 endif ()
+
+
+# build assimp
 if (NOT ASSIMP_READY)
-#build assimp
 	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
 		message (STATUS "Configuring assimp for ${CONF}, please wait.....")
 		execute_process ( 
@@ -120,12 +116,14 @@ if (NOT ASSIMP_READY)
 		reportError (output if error)
 	endforeach ()
 endif ()
-#use assimp
+
+# create assimp cmake library
 add_library(MY_ASSIMP STATIC IMPORTED)
 set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_DEBUG ${ASSIMP_STATIC_LIB_PATH_DEBUG})
 set_property(TARGET MY_ASSIMP PROPERTY IMPORTED_LOCATION_RELEASE ${ASSIMP_STATIC_LIB_PATH_RELEASE})
 
-#ApeAssimpAssetLoaderPlugin
+
+# set headers, sources, include directories
 set (HEADERS
 	ApeAssimpAssetLoaderPlugin.h
 	)
@@ -143,9 +141,10 @@ include_directories(
 # Add the dinamic library target to the project
 add_library (ApeAssimpAssetLoaderPlugin SHARED ${SOURCES} ${HEADERS})
 
-# Link with dependency libraries
+# set compile definitions
 set_property (TARGET ApeAssimpAssetLoaderPlugin PROPERTY COMPILE_DEFINITIONS APE_BIN_DIR="${APE_BIN_DIR}" APE_SOURCE_DIR="${APE_SOURCE_DIR}")
 
+# Link with dependency libraries
 if (LINUX)
 	target_link_libraries (ApeAssimpAssetLoaderPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow ${ASSIMP_STATIC_LIB_PATH_RELEASE})
 else ()
@@ -155,17 +154,9 @@ endif ()
 # Place target xxx into the specified folder in IDEs supporting it
 set_property (TARGET ApeAssimpAssetLoaderPlugin PROPERTY FOLDER "Plugins")
 
+# copy generated libraries to APE output dir
 foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
 	if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_${CONF}})
 		file(COPY ${ASSIMP_SHARED_LIB_PATH_${CONF}} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONF})
 	endif()
 endforeach ()
-
-# debug dlls
-# if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_DEBUG})
-# 	file(COPY ${ASSIMP_SHARED_LIB_PATH_DEBUG} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug)
-# endif()
-# release dlls
-# if(NOT EXISTS ${ASSIMP_SHARED_LIB_PATH_APE_RELEASE})
-# 	file(COPY ${ASSIMP_SHARED_LIB_PATH_RELEASE} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release)
-# endif()
