@@ -19,6 +19,12 @@ build/
 *.exe
 *.obj
 *.lib
+*.a
+*.so
+*.so*
+*.dll
+*.dylib
+
 *.exp
 *.stamp
 *.stamp.depend
@@ -55,6 +61,7 @@ Makefile.inc.cmake
 3rdParty/ogre/Dependencies/ogredeps
 3rdParty/ogre/include/OgreBuildSettings.h
 3rdParty/ogre/SDK/
+3rdParty/ogre/lib
 3rdParty/ogre/CPackConfig.cmake
 3rdParty/ogre/CPackSourceConfig.cmake
 3rdParty/ogre_procedural/SDK/
@@ -62,6 +69,8 @@ Makefile.inc.cmake
 3rdParty/ogre_procedural/version.txt
 3rdParty/ogre_procedural/CPackConfig.cmake
 3rdParty/ogre_procedural/CPackSourceConfig.cmake
+3rdParty/ogre_procedural/lib
+3rdParty/ogre_procedural/CMakeDoxy*
 3rdParty/ogre/pkgconfig/*
 3rdParty/ogre/**/*.d
 3rdParty/ogre/**/*.data
@@ -69,9 +78,11 @@ Makefile.inc.cmake
 3rdParty/ogre/**/*.pch
 3rdParty/ogre/**/*.hash-criteria
 3rdParty/ogre/EnabledFeatures.txt
+3rdParty/ogre/html.cfg
 
 # RakNet
 3rdParty/raknet/include
+3rdParty/raknet/Lib/LibStatic
 
 # Curl
 3rdParty/curl/DartConfiguration.tcl
@@ -108,6 +119,17 @@ node_modules/
 
 # Leap Motion
 3rdParty/leapMotion/*
+
+# Assimp
+3rdParty/assimp/cmake_uninstall.cmake
+3rdParty/assimp/contrib/zlib/zconf.h
+3rdParty/assimp/contrib/zlib/zlib.pc
+3rdParty/assimp/include/assimp/config.h
+3rdParty/assimp/revision.h
+3rdParty/assimp/DartConfiguration.tcl
+3rdParty/assimp/assimp-config-version.cmake
+3rdParty/assimp/assimp-config.cmake
+3rdParty/assimp/assimp.pc
 
 # Exclude thirdparties
 !3rdParty/oculus/LibOVR/Lib/*
