@@ -518,6 +518,27 @@ namespace Ape
 		{
 			return (subjectName == other.subjectName && type == other.type);
 		}
+
+		std::string toString() const
+		{
+			std::ostringstream buff;
+			buff << "subjectName: '" << this->subjectName << "', \t type: " << this->type << " (" << Ape::Event::getTypeName(this->type) << ") \t group: " << this->group << " (" << Ape::Event::getGroupName(this->group) << ")";
+			return buff.str();
+		}
+
+		std::string toJsonString() const
+		{
+			std::ostringstream buff;
+			buff << "{ ";
+			buff << "\"subjectName\": \"" << this->subjectName << "\", ";
+			buff << "\"type\": " << this->type << ", ";
+			buff << "\"typeName\": \"" << getTypeName(this->type) << "\", ";
+			buff << "\"group\": " << this->group << ", ";
+			buff << "\"groupName\": \"" << Ape::Event::getGroupName(this->group) << "\"";
+			buff << " }";
+			return buff.str();
+		}
 	};
 }
+
 #endif
