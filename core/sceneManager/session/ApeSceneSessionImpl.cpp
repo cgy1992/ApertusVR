@@ -422,7 +422,7 @@ void Ape::SceneSessionImpl::listenReplicaPeer()
 			case ID_NAT_PUNCHTHROUGH_SUCCEEDED:
 				{
 					unsigned char weAreTheSender = packet->data[1];
-					APE_LOG_DEBUG("ID_NAT_PUNCHTHROUGH_SUCCEEDED: weAreTheSender=" << weAreTheSender);
+					APE_LOG_DEBUG("ID_NAT_PUNCHTHROUGH_SUCCEEDED: weAreTheSender=" << std::boolalpha << (bool)weAreTheSender);
 					if (mParticipantType == Ape::SceneSession::ParticipantType::HOST)
 					{
 						mpRakReplicaPeer->GetConnectionState(packet->systemAddress);
