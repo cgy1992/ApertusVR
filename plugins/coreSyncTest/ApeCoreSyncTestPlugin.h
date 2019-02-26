@@ -47,11 +47,15 @@ namespace Ape
 
 		Ape::ISystemConfig* mpSystemConfigManager;
 
-		std::string uniqueUserNamePrefix;
+		std::string mUniqueUserNamePrefix;
 
 		Ape::EntityWeakPtr mStatusText;
 
 		void eventCallBack(const Ape::Event& event);
+
+		std::string getSystemDateTime();
+
+		void changeStatusText(std::string caption);
 
 	public:
 		ApeCoreSyncTestPlugin();
