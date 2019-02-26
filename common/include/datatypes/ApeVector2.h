@@ -39,6 +39,13 @@ namespace Ape
 			x(_x), y(_y)
 		{}
 
+		std::string toString() const
+		{
+			std::ostringstream buff;
+			buff << x << ", " << y;
+			return buff.str();
+		}
+
 		std::string toJsonString() const
 		{
 			std::ostringstream buff;
