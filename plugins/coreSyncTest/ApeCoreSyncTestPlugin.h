@@ -32,6 +32,8 @@ SOFTWARE.*/
 #include "managers/ApeISceneManager.h"
 #include "managers/ApeISystemConfig.h"
 #include "sceneelements/ApeITextGeometry.h"
+#include "utils/ApeMath.h"
+#include "utils/ApeDateTime.h"
 
 #define THIS_PLUGINNAME "ApeCoreSyncTestPlugin"
 
@@ -49,13 +51,11 @@ namespace Ape
 
 		std::string mUniqueUserNamePrefix;
 
+		Ape::SceneSession::ParticipantType mParticipantType;
+
 		Ape::EntityWeakPtr mStatusText;
 
 		void eventCallBack(const Ape::Event& event);
-
-		std::string getSystemDateTime();
-
-		void changeStatusText(std::string caption);
 
 	public:
 		ApeCoreSyncTestPlugin();

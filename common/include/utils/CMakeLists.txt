@@ -21,8 +21,10 @@
 #SOFTWARE.
 
 set (HEADERS
+	ApeDateTime.h
 	ApeDoubleQueue.h
 	ApeInterpolator.h
+	ApeMath.h
 	ApeSingleton.h
 )
 

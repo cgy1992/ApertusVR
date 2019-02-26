@@ -7,8 +7,6 @@
         "participantType": "Host",
         "uniqueUserNamePrefix": "Host",
         "sessionGUID": "UNASSIGNED_RAKNET_GUID",
-        "sessionIP": "192.168.0.97",
-        "sessionPort": "62666",
         "sessionResourceLocation": [
         ],
         "natPunchThroughServer": {
