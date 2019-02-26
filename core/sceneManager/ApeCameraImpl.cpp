@@ -27,18 +27,18 @@ Ape::CameraImpl::CameraImpl(std::string name) : Ape::ICamera(name)
 {
 	mpEventManagerImpl = ((Ape::EventManagerImpl*)Ape::IEventManager::getSingletonPtr());
 	mpSceneManager = Ape::ISceneManager::getSingletonPtr();
-	mFocalLength = 0.0f;
-	mFrustumOffset = Ape::Vector2();
-	mFOVy = 0.0f;
-	mNearClipDistance = 0.0f;
-	mFarClipDistance = 0.0f;
-	mAspectRatio = 0.0f;
-	mIsAutoAspectRatio = false;
-	mProjection = Ape::Matrix4();
+	setFocalLength(0.0f);
+	setFrustumOffset(Ape::Vector2());
+	setFOVy(0.0f);
+	setNearClipDistance(0.0f);
+	setFarClipDistance(0.0f);
+	setAspectRatio(0.0f);
+	setAutoAspectRatio(false);
+	setProjection(Ape::Matrix4());
 	mParentNode = Ape::NodeWeakPtr();
-	mProjectionType = Ape::Camera::ProjectionType::INVALID;
-	mOrthoWindowSize = Ape::Vector2();
-	mWindow = std::string();
+	setProjectionType(Ape::Camera::ProjectionType::INVALID);
+	setOrthoWindowSize(0, 0);
+	setWindow(std::string());
 }
 
 Ape::CameraImpl::~CameraImpl()

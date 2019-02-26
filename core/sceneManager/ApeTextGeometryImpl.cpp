@@ -27,9 +27,10 @@ Ape::TextGeometryImpl::TextGeometryImpl(std::string name, bool isHostCreated) : 
 {
 	mpEventManagerImpl = ((Ape::EventManagerImpl*)Ape::IEventManager::getSingletonPtr());
 	mpSceneManager = Ape::ISceneManager::getSingletonPtr();
-	mCaption = "";
-	mVisibility = false;
-	mShowOnTop = false;
+
+	setCaption("");
+	setVisible(false);
+	showOnTop(false);
 }
 
 Ape::TextGeometryImpl::~TextGeometryImpl()

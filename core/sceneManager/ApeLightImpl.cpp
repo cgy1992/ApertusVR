@@ -26,12 +26,14 @@ Ape::LightImpl::LightImpl(std::string name, bool isHostCreated) : Ape::ILight(na
 {
 	mpEventManagerImpl = ((Ape::EventManagerImpl*)Ape::IEventManager::getSingletonPtr());
 	mpSceneManager = Ape::ISceneManager::getSingletonPtr();
-	mLightType = Ape::Light::Type::INVALID;
-	mDiffuseColor = Ape::Color();
-	mSpecularColor = Ape::Color();
-	mLightSpotRange = Ape::LightSpotRange();
-	mLightAttenuation = Ape::LightAttenuation();
-	mLightDirection = Ape::Vector3();
+
+	setLightType(Ape::Light::Type::INVALID);
+	setDiffuseColor(Ape::Color());
+	setSpecularColor(Ape::Color());
+	setLightSpotRange(Ape::LightSpotRange());
+	setLightAttenuation(Ape::LightAttenuation());
+	setLightDirection(Ape::Vector3());
+
 	mParentNode = Ape::NodeWeakPtr();
 	mParentNodeName = std::string();
 }
