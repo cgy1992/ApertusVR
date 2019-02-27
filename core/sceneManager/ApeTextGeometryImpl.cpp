@@ -111,25 +111,50 @@ void Ape::TextGeometryImpl::Deserialize(RakNet::DeserializeParameters *deseriali
 {
 	RakNet::VariableDeltaSerializer::DeserializationContext deserializationContext;
 	mVariableDeltaSerializer.BeginDeserialize(&deserializationContext, &deserializeParameters->serializationBitstream[0]);
+	
 	RakNet::RakString caption;
-	RakNet::RakString parentName;
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, caption))
 	{
-		mCaption = caption.C_String();
-		mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_CAPTION));
+		if (mCaption != caption.C_String())
+		{
+			mCaption = caption.C_String();
+			mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_CAPTION));
+		}
 	}
+
+	RakNet::RakString parentName;
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, parentName))
 	{
 		if (auto parentNode = mpSceneManager->getNode(parentName.C_String()).lock())
 		{
 			mParentNode = parentNode;
-			mParentNodeName = parentName.C_String();
-			mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_PARENTNODE));
+			if (mParentNodeName != parentName.C_String())
+			{
+				mParentNodeName = parentName.C_String();
+				mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_PARENTNODE));
+			}
 		}
 	}
-	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mVisibility))
-		mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_VISIBLE));
+
+	bool visibility;
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, visibility))
+	{
+		if (mVisibility != visibility)
+		{
+			mVisibility = visibility;
+			mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_VISIBLE));
+		}
+	}
+
+	bool showOnTop;
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mShowOnTop))
-		mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_SHOWONTOP));
+	{
+		if (mShowOnTop != showOnTop)
+		{
+			mShowOnTop = showOnTop;
+			mpEventManagerImpl->fireEvent(Ape::Event(mName, Ape::Event::Type::GEOMETRY_TEXT_SHOWONTOP));
+		}
+	}
+
 	mVariableDeltaSerializer.EndDeserialize(&deserializationContext);
 }
