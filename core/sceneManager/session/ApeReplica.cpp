@@ -77,7 +77,7 @@ void Ape::Replica::DeallocReplica( RakNet::Connection_RM3 *sourceConnection )
 
 RakNet::RM3QuerySerializationResult Ape::Replica::QuerySerialization( RakNet::Connection_RM3 *destinationConnection )
 {
-	return QuerySerialization_ClientSerializable(destinationConnection, mIsHostCreated);
+	return QuerySerialization_PeerToPeer(destinationConnection, RakNet::Replica3P2PMode::R3P2PM_MULTI_OWNER_CURRENTLY_AUTHORITATIVE);
 }
 
 void Ape::Replica::listenStreamPeerSendThread(RakNet::RakPeerInterface* streamPeer)
