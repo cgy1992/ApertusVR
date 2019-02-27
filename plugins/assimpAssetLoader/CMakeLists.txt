@@ -24,6 +24,14 @@
 # In /3rdParty/assimp/code/X3DImporter.cpp std::transforms are commented out because of operator != problem
 # assimp patch log begin
 
+# require C++14
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# set compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+add_definitions(-std=c++14)
+
 set(ASSIMP_READY FALSE)
 set(ASSIMP_HOME ${CMAKE_SOURCE_DIR}/3rdParty/assimp)
 
