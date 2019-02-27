@@ -59,7 +59,7 @@ void Ape::ApeCoreSyncTestPlugin::eventCallBack(const Ape::Event& e)
 void Ape::ApeCoreSyncTestPlugin::Init()
 {
 	APE_LOG_FUNC_ENTER();
-	if (mParticipantType == Ape::SceneSession::ParticipantType::HOST)
+	if (mParticipantType == Ape::SceneSession::ParticipantType::GUEST)
 	{
 		if (auto testNode = mpSceneManager->createNode("testNode").lock())
 		{
@@ -77,14 +77,23 @@ void Ape::ApeCoreSyncTestPlugin::Init()
 void Ape::ApeCoreSyncTestPlugin::Run()
 {
 	APE_LOG_FUNC_ENTER();
-	while (true)
+	if (mParticipantType == Ape::SceneSession::ParticipantType::HOST)
 	{
-		if (auto textGeometry = std::dynamic_pointer_cast<Ape::ITextGeometry>(mStatusText.lock()))
+		while (true)
 		{
-			textGeometry->setCaption(mUniqueUserNamePrefix + " - " + Ape::DateTime::getSystemDateTime());
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	}
+	else if (mParticipantType == Ape::SceneSession::ParticipantType::GUEST)
+	{
+		while (true)
+		{
+			if (auto textGeometry = std::dynamic_pointer_cast<Ape::ITextGeometry>(mpSceneManager->getEntity("testTextGeometry").lock()))
+			{
+				textGeometry->setCaption(mUniqueUserNamePrefix + " - " + Ape::DateTime::getSystemDateTime());
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+		}
 	}
 	APE_LOG_FUNC_LEAVE();
 }
