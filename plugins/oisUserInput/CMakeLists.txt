@@ -25,52 +25,8 @@
 # Win32KeyBoard.h ln 54 was edited { return KeyCode::KC_UNASSIGNED;/*TODO: Implement OS version*/; }
 # ois patch log begin
 
-set (OIS_HOME ${CMAKE_SOURCE_DIR}/3rdParty/ois)
-set (OIS_READY FALSE)
+include("cmake/prepare_ois.cmake")
 
-
-#error function
-function (reportError what and when)
-	if (${${when}})
-		message (${${what}})
-	endif ()
-endfunction ()
-#find ois
-if(EXISTS ${OIS_HOME}/Debug/OIS.lib AND EXISTS ${OIS_HOME}/Release/OIS.lib)
-	set(OIS_READY TRUE)
-	message (STATUS "ois is installed" )
-else ()
-	set(OIS_READY FALSE)
-	message (STATUS "ois is not installed" )
-endif ()
-if (NOT OIS_READY)
-#build ois
-	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
-		message (STATUS "Configuring ois for ${CONF}, please wait.....")
-		execute_process ( 
-				COMMAND ${CMAKE_COMMAND} 
-				-G ${CMAKE_GENERATOR} 
-				.
-				WORKING_DIRECTORY ${OIS_HOME}
-				RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
-				)		
-		reportError (output if error)
-		message (STATUS "Building ois for ${CONF}, please wait.....")
-		execute_process ( 
-			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target ALL_BUILD
-			WORKING_DIRECTORY ${OIS_HOME}
-			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
-		reportError (output if error)
-	endforeach ()
-endif ()
-#use ois
-add_library(MY_OIS STATIC IMPORTED)
-if (WIN32)
-	set_property(TARGET MY_OIS PROPERTY IMPORTED_LOCATION_DEBUG ${OIS_HOME}/Debug/OIS.lib)
-	set_property(TARGET MY_OIS PROPERTY IMPORTED_LOCATION_RELEASE ${OIS_HOME}/Release/OIS.lib)
-endif ()
-
-#ApeOisUserInputPlugin
 set (HEADERS
 	ApeOisUserInputPlugin.h
 	ApeOisUserInputPluginConfigs.h
@@ -82,7 +38,7 @@ set (SOURCES
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/common/include  
-	${OIS_HOME}/includes
+	${OIS_INCLUDE_DIRS}
 	${RAPIDJSON_INCLUDE_DIR}
 	)
 
@@ -90,27 +46,16 @@ include_directories(
 add_library (ApeOisUserInputPlugin SHARED ${SOURCES} ${HEADERS})
 
 # Link with dependency libraries
-target_link_libraries (ApeOisUserInputPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow MY_OIS)
+if (LINUX)
+	target_link_libraries (ApeOisUserInputPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow ${OIS_STATIC_LIB_PATH_RELEASE})	
+else ()
+	target_link_libraries (ApeOisUserInputPlugin ApePluginManager ApeSceneManager ApeEventManager ApeLogManager ApeSystemConfig ApeMainWindow MY_OIS)
+endif ()
+
 if (WIN32)
 	# we have to link to some DirectX libraries 
 	target_link_libraries (ApeOisUserInputPlugin dinput8 dxguid)
-endif ()	
+endif ()
 
 # Place target xxx into the specified folder in IDEs supporting it
 set_property (TARGET ApeOisUserInputPlugin PROPERTY FOLDER "Plugins")
-
-if (WIN32)
-	# todo are there any solution for doing this platform idependent way? maybe ogre install? sdk?
-	# Copying the ois bins to the desired place
-	# debug dlls
-	if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug/OIS_d.lib)
-		file(COPY ${OIS_HOME}/Debug/OIS.lib DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/debug)
-	endif()
-	# release dlls
-	if(NOT EXISTS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release/OIS.lib)
-		file(COPY ${OIS_HOME}/Release/OIS.lib DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/release)
-	endif()
-endif ()
-
-
-

@@ -1,0 +1,147 @@
+# require C++14
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
+# set compiler flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+add_definitions(-std=c++14)
+
+
+# set compiler to g++ on Linux
+if (LINUX_X64)
+	message(STATUS "Add -fPIC to CMAKE_CXX_FLAGS for Linux X64 build")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -DPIC -D_GLIBCXX_USE_CXX11_ABI=0 -L/usr/X11R6/lib -lX11")
+	add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif ()
+
+
+# ois
+set(OIS_READY FALSE)
+set(OIS_SOURCE_DIR ${APE_SOURCE_DIR}/3rdParty/ois)
+set(OIS_INCLUDE_DIRS ${OIS_SOURCE_DIR}/includes)
+
+
+# set variables according to platforms
+if (WIN32 OR APPLE)
+
+	message (STATUS "Ois: prepare on Windows")
+
+	set(OIS_OUTPUT_FILE_NAME_STATIC "OIS${APE_FILE_EXT_STATIC}")
+	set(OIS_OUTPUT_FILE_NAME_SHARED "OIS${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(OIS_STATIC_LIB_PATH_DEBUG "${OIS_SOURCE_DIR}/Debug/${OIS_OUTPUT_FILE_NAME_STATIC}")
+	set(OIS_STATIC_LIB_PATH_RELEASE "${OIS_SOURCE_DIR}/Release/${OIS_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(OIS_SHARED_LIB_PATH_DEBUG "${OIS_SOURCE_DIR}/Debug/${OIS_OUTPUT_FILE_NAME_SHARED}")
+	set(OIS_SHARED_LIB_PATH_RELEASE "${OIS_SOURCE_DIR}/Release/${OIS_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for static
+	set(OIS_STATIC_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+	set(OIS_STATIC_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+
+	# output for shared
+	set(OIS_SHARED_LIB_PATH_APE_DEBUG "${APE_OUTPUT_DIR_DEBUG}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+	set(OIS_SHARED_LIB_PATH_APE_RELEASE "${APE_OUTPUT_DIR_RELEASE}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+
+elseif (LINUX)
+
+	message (STATUS "Ois: prepare on Linux")
+
+	set(OIS_OUTPUT_FILE_NAME_STATIC "libOIS${APE_FILE_EXT_STATIC}")
+	set(OIS_OUTPUT_FILE_NAME_SHARED "libOIS${APE_FILE_EXT_SHARED}")
+
+	# static
+	set(OIS_STATIC_LIB_PATH_DEBUG "${OIS_SOURCE_DIR}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+	set(OIS_STATIC_LIB_PATH_RELEASE "${OIS_SOURCE_DIR}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+
+	# shared
+	set(OIS_SHARED_LIB_PATH_DEBUG "${OIS_SOURCE_DIR}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+	set(OIS_SHARED_LIB_PATH_RELEASE "${OIS_SOURCE_DIR}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+
+	# output for static
+	set(OIS_STATIC_LIB_PATH_APE_DEBUG "${APE_LIB_DIR}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+	set(OIS_STATIC_LIB_PATH_APE_RELEASE "${APE_LIB_DIR}/${OIS_OUTPUT_FILE_NAME_STATIC}")
+
+	# output for shared
+	set(OIS_SHARED_LIB_PATH_APE_DEBUG "${APE_LIB_DIR}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+	set(OIS_SHARED_LIB_PATH_APE_RELEASE "${APE_LIB_DIR}/${OIS_OUTPUT_FILE_NAME_SHARED}")
+
+endif ()
+
+
+# check curl output libraries
+if (WIN32 OR APPLE)
+	if (EXISTS ${OIS_STATIC_LIB_PATH_DEBUG} AND EXISTS ${OIS_STATIC_LIB_PATH_RELEASE})
+		set(OIS_READY TRUE)
+		message(STATUS "Ois: libraries are installed" )
+	else ()
+		set(OIS_READY FALSE)
+		message(STATUS "Ois: libraries are not installed" )
+	endif ()
+elseif (LINUX)
+	if (EXISTS ${OIS_STATIC_LIB_PATH_DEBUG} AND EXISTS ${OIS_STATIC_LIB_PATH_RELEASE})
+		set(OIS_READY TRUE)
+		message(STATUS "Ois: libraries are installed" )
+	else ()
+		set(OIS_READY FALSE)
+		message(STATUS "Ois: libraries are not installed" )
+	endif ()
+endif ()
+
+
+# build curl
+if (NOT OIS_READY)
+
+	if (LINUX_X64)
+		set(EXTRA_COMPILE_OPTIONS "-fPIC")
+	endif ()
+
+	# call thirdparty's cmake to configure and build
+	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+		message(STATUS "Ois: Configuring for ${CONF}, please wait.....")
+		execute_process(
+				COMMAND ${CMAKE_COMMAND}
+				-DCMAKE_COMPILE_OPTIONS:STRING=${EXTRA_COMPILE_OPTIONS}
+				-G ${CMAKE_GENERATOR}
+				.
+				WORKING_DIRECTORY ${OIS_SOURCE_DIR}
+				RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
+				)
+		reportError(output if error)
+		message(STATUS "Ois: Building for ${CONF}, please wait.....")
+		execute_process(
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF}
+			WORKING_DIRECTORY ${OIS_SOURCE_DIR}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
+		reportError(output if error)
+	endforeach ()
+
+endif ()
+
+
+# create ois cmake library
+add_library(MY_OIS STATIC IMPORTED)
+set_property(TARGET MY_OIS PROPERTY IMPORTED_LOCATION_DEBUG ${OIS_STATIC_LIB_PATH_DEBUG})
+set_property(TARGET MY_OIS PROPERTY IMPORTED_LOCATION_RELEASE ${OIS_STATIC_LIB_PATH_RELEASE})
+
+
+# copy generated libraries to APE output dir
+foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+	string(TOUPPER ${CONF} CONF_UPPER)
+
+	if (LINUX)
+		set(CONF "")
+	endif ()
+
+	if(EXISTS ${OIS_SHARED_LIB_PATH_${CONF_UPPER}} AND NOT EXISTS ${OIS_SHARED_LIB_PATH_APE_${CONF_UPPER}})
+		file(COPY ${OIS_SHARED_LIB_PATH_${CONF_UPPER}} DESTINATION ${APE_LIB_DIR}/${CONF})
+	endif()
+
+	if(EXISTS ${OIS_STATIC_LIB_PATH_${CONF_UPPER}} AND NOT EXISTS ${OIS_STATIC_LIB_PATH_APE_${CONF_UPPER}})
+		file(COPY ${OIS_STATIC_LIB_PATH_${CONF_UPPER}} DESTINATION ${APE_LIB_DIR}/${CONF})
+	endif()
+endforeach ()
