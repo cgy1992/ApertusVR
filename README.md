@@ -25,5 +25,5 @@ into an already existing product.
 By the help of the factory plugins and samples
 ApertusVR could boosts up the creation of a minimum viable product from scratch.
 
-##License
+## License
 ApertusVR is released under the MIT License, which is a permissive open source license. The only condition is that you distribute the [license](https://github.com/MTASZTAKI/ApertusVR/blob/master/LICENSE) text included in our distribution with any software that uses ApertusVR.
