@@ -20,8 +20,25 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-# Add all header and cpp files in the directory to the project
 
+
+include("../cmake/prepare_rapidjson.cmake")
+
+if(NOT TARGET MY_CURL)
+	include("../cmake/prepare_curl.cmake")
+endif()
+if(NOT TARGET MY_CURL)
+	message(FATAL "There is no target with name MY_CURL")
+endif()
+
+if(NOT TARGET RAKNET)
+	include("../cmake/prepare_raknet.cmake")
+endif()
+if(NOT TARGET RAKNET)
+	message(FATAL "There is no target with name RAKNET")
+endif()
+
+# Add all header and cpp files in the directory to the project
 set(HEADERS
 	apeTextGeometryImpl.h
 	apeLightImpl.h
@@ -56,7 +73,7 @@ set(HEADERS
 	network/apeReplicaManager.h
 	network/apeLobbyManager.h
 	network/apeHttpManager.h
-	)
+)
 
 set(SOURCES
 	apeTextGeometryImpl.cpp
@@ -92,7 +109,7 @@ set(SOURCES
 	network/apeReplicaManager.cpp
 	network/apeLobbyManager.cpp
 	network/apeHttpManager.cpp
-	)
+)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/core/sceneManager
@@ -102,7 +119,7 @@ include_directories(
 	${RAKNET_INCLUDE_DIR}
 	${CURL_INCLUDE_DIRS}
 	${RAPIDJSON_INCLUDE_DIR}
-	)
+)
 
 # Add the dinamic library target to the project
 add_library(apeSceneManager SHARED ${SOURCES} ${HEADERS})
@@ -113,11 +130,11 @@ set(APE_LINK_LIBS_SCENEMANAGER
 	apeEventManager
 	apeLogManager
 	RAKNET
-	)
+)
 
 set(APE_PREPROC_DEF_SCENEMANAGER
 	BUILDING_APE_SCENEMANAGER_DLL
-	)
+)
 
 if (${CURL_READY})
 	list(APPEND APE_LINK_LIBS_SCENEMANAGER MY_CURL)

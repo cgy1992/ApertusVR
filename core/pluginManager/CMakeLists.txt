@@ -20,13 +20,15 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
+include("../cmake/prepare_rapidjson.cmake")
+
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	apeInternalPluginManager.h
 	apePluginManagerImpl.h
 	apePluginFactory.h
 	apePluginInstance.h
-	)
+)
 
 set (SOURCES 
 	apePluginManagerImpl.cpp
@@ -34,13 +36,12 @@ set (SOURCES
 	apePluginFactory.cpp
 	apeInternalPluginManager.cpp
 	apePluginInstance.cpp
-	)
+)
 	
 include_directories(
-	
 	${PROJECT_SOURCE_DIR}/core/logManager
 	${RAPIDJSON_INCLUDE_DIR}
-	)
+)
 
 # Add the dynamic library target to the project
 add_library (apePluginManager SHARED ${SOURCES} ${HEADERS})

@@ -1,6 +1,6 @@
 #MIT License
 #
-#Copyright (c) 2018 MTA SZTAKI
+#Copyright (c) 2016 MTA SZTAKI
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy
 #of this software and associated documentation files (the "Software"), to deal
@@ -20,32 +20,16 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-if(NOT TARGET RAKNET)
-	include("../cmake/prepare_raknet.cmake")
-endif()
-if(NOT TARGET RAKNET)
-	message(FATAL "There is no target with name RAKNET")
-endif()
-
-# Add all header and cpp files in the directory to the project
-set (SOURCES
-	apeSystem.cpp
+set (CMAKEFILES
+    prepare_curl.cmake
+    prepare_raknet.cmake
+    prepare_rapidjson.cmake
+    CMakeLists.txt
 )
 
-include_directories(
-	${PROJECT_SOURCE_DIR}/core/pluginManager
-	${PROJECT_SOURCE_DIR}/core/eventManager
-	${PROJECT_SOURCE_DIR}/core/logManager
-	${PROJECT_SOURCE_DIR}/core/CoreConfig
-	${PROJECT_SOURCE_DIR}/core/mainWindow
-	${PROJECT_SOURCE_DIR}/core/sceneManager
-	${RAKNET_INCLUDE_DIR}	
+add_custom_target(
+    CMake_core ALL
+    SOURCES ${CMAKEFILES}
 )
 
-add_library (apeSystem SHARED ${SOURCES} )
-
-target_link_libraries (apeSystem apePluginManager apeEventManager apeLogManager apeSceneManager apeCoreConfig)
-
-# Place target xxx into the specified folder in IDEs supporting it
-set_property (TARGET apeSystem PROPERTY COMPILE_DEFINITIONS BUILDING_APE_SYSTEM_DLL)
-set_property (TARGET apeSystem PROPERTY FOLDER "Core")
+set_property (TARGET CMake_core PROPERTY FOLDER "Core/CMake")

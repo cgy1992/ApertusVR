@@ -20,18 +20,19 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
+include("../cmake/prepare_rapidjson.cmake")
+
 # Add all header and cpp files in the directory to the project
 set (HEADERS
 	apeCoreConfigImpl.h
-	)
+)
 set (SOURCES
 	apeCoreConfigImpl.cpp
-	)
+)
 	
 include_directories(
-		${RAPIDJSON_INCLUDE_DIR}
-	)
-
+	${RAPIDJSON_INCLUDE_DIR}
+)
 
 add_library (apeCoreConfig SHARED ${SOURCES} ${HEADERS})
 
