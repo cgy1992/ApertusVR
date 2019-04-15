@@ -1,0 +1,6 @@
+[requires]
+Raknet/4.0.8.1@apertusvr/release
+Assimp/4.1.0@apertusvr/release
+
+[generators]
+cmake
