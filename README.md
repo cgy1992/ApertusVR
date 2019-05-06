@@ -1,6 +1,8 @@
 # ApertusVR
 Free virtual and augmented reality engine
 
+![image](http://srv.mvv.sztaki.hu/temp/overview/overview.png)
+
 [website](http://www.apertusvr.org)
 
 [documentation](https://apertus.gitbook.io/vr)
