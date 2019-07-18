@@ -4,7 +4,7 @@
 		"jsApiPath": "plugins/jsAPI/nodeJsPlugin/js/"
 	},
 	"build": {
-		"binPath": "C:/ApertusVR/build/bin/",
+		"binPath": "C:/CmakedApertusVR/bin/",
 		"nodeModulesPath": "node_modules/",
 		"apertusModulePath": "apertusvr/"
 	}

@@ -21,7 +21,7 @@
 #SOFTWARE.
 
 set (CONFIGS
-	apeOgreRenderPlugin.json
+	apeOgre21RenderPlugin.json
 	apeOisUserInputPlugin.json
 	apeNodeJsPlugin.json
 	apeX3DLoaderPlugin.json

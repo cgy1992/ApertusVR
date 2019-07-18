@@ -1,17 +1,13 @@
 /*MIT License
-
-Copyright (c) 2016 MTA SZTAKI
-
+Copyright (c) 2018 MTA SZTAKI
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,8 +16,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-#ifndef APE_OGRE21RENDERPLUGIN_H
-#define APE_OGRE21RENDERPLUGIN_H
+#ifndef APE_OGRERENDERPLUGIN_H
+#define APE_OGRERENDERPLUGIN_H
 
 //std includes
 #include <iostream>
@@ -35,9 +31,9 @@ SOFTWARE.*/
 #include "OgreLogManager.h"
 #include "OgreMaterial.h"
 #include "OgreManualObject.h"
-#include "OgreManualObject2.h"
-#include "OgreMesh2.h"
-#include "OgreMeshManager2.h"
+//#include "OgreManualObject2.h"
+//#include "OgreMesh2.h"
+//#include "OgreMeshManager2.h"
 #include "OgreMovableObject.h"
 #include "OgrePixelCountLodStrategy.h"
 #include "OgreRenderWindow.h"
@@ -45,53 +41,56 @@ SOFTWARE.*/
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-#include "OgreSubMesh2.h"
+//#include "OgreSubMesh2.h"
 #include "OgreTechnique.h" 
 #include "OgreTextureManager.h"
 #include "OgreWindowEventUtilities.h"
 
 
+
+
+
 //ApertusVR includes
-#include "ApeIFileMaterial.h"
-#include "ApeITextGeometry.h"
-#include "ApeILight.h"
-#include "ApeIFileGeometry.h"
-#include "ApeIPlaneGeometry.h"
-#include "ApeIBoxGeometry.h"
-#include "ApeICylinderGeometry.h"
-#include "ApeITorusGeometry.h"
-#include "ApeITubeGeometry.h"
-#include "ApeIRayGeometry.h"
-#include "ApeISphereGeometry.h"
-#include "ApeIConeGeometry.h"
-#include "ApeIIndexedFaceSetGeometry.h"
-#include "ApeIIndexedLineSetGeometry.h"
-#include "ApeIManualMaterial.h"
-#include "ApePluginAPI.h"
-#include "ApeIPlugin.h"
-#include "ApeISceneManager.h"
-#include "ApeICamera.h"
-#include "ApeIPointCloud.h"
+#include "managers/apeILogManager.h"
+#include "sceneelements/apeIFileMaterial.h"
+#include "sceneelements/apeITextGeometry.h"
+#include "sceneelements/apeILight.h"
+#include "sceneelements/apeIFileGeometry.h"
+#include "sceneelements/apeIPlaneGeometry.h"
+#include "sceneelements/apeIBoxGeometry.h"
+#include "sceneelements/apeICylinderGeometry.h"
+#include "sceneelements/apeITorusGeometry.h"
+#include "sceneelements/apeITubeGeometry.h"
+#include "sceneelements/apeIRayGeometry.h"
+#include "sceneelements/apeISphereGeometry.h"
+#include "sceneelements/apeIConeGeometry.h"
+#include "sceneelements/apeIIndexedFaceSetGeometry.h"
+#include "sceneelements/apeIIndexedLineSetGeometry.h"
+#include "sceneelements/apeIManualMaterial.h"
+#include "plugin/apePluginAPI.h"
+#include "plugin/apeIPlugin.h"
+#include "managers/apeISceneManager.h"
+#include "sceneelements/apeICamera.h"
+#include "sceneelements/apeIPointCloud.h"
 #define APE_DOUBLEQUEUE_UNIQUE
-#include "ApeDoubleQueue.h"
-#include "ApeIEventManager.h"
-#include "ApeISystemConfig.h"
-#include "ApeIMainWindow.h"
-#include "ApeIFileGeometry.h"
-#include "ApeIUnitTexture.h"
-#include "ApeIPbsPass.h"
-#include "ApeIManualPass.h"
-#include "ApeIManualTexture.h"
-#include "ApeISky.h"
-#include "ApeIWater.h"
+#include "utils/apeDoubleQueue.h"
+#include "managers/apeIEventManager.h"
+#include "managers/apeICoreConfig.h"
+#include "sceneelements/apeIFileGeometry.h"
+#include "sceneelements/apeIUnitTexture.h"
+#include "sceneelements/apeIPbsPass.h"
+#include "sceneelements/apeIManualPass.h"
+#include "sceneelements/apeIManualTexture.h"
+#include "sceneelements/apeISky.h"
+#include "sceneelements/apeIWater.h"
 
 //Own includes
-#include "ApeOgre21RenderPluginConfigs.h"
-#include "ApeOgre21Conversions.h"
+#include "apeOgre21RenderPluginConfigs.h"
+#include "apeOgre21Conversions.h"
 
-#define THIS_PLUGINNAME "ApeOgre21RenderPlugin"
+#define THIS_PLUGINNAME "apeOgre21RenderPlugin"
 
-namespace Ape
+namespace ape
 {
 	class Ogre21RenderPlugin : public IPlugin, public Ogre::FrameListener
 	{
@@ -118,7 +117,7 @@ namespace Ape
 
 		bool frameEnded(const Ogre::FrameEvent& evt) override;
 
-		
+
 
 	private:
 		Ogre::Root* mpRoot;
@@ -127,49 +126,47 @@ namespace Ape
 
 		std::vector<Ogre::Camera*> mOgreCameras;
 
-		
+
 
 		std::map<std::string, Ogre::RenderWindow*> mRenderWindows;
 
-		
+
 
 		Ogre::HlmsManager* mpHlmsPbsManager;
 
-		
 
-		
 
-		Ape::ISceneManager* mpSceneManager;
 
-		Ape::IEventManager* mpEventManager;
 
-		Ape::ISystemConfig* mpSystemConfig;
+		ape::ISceneManager* mpSceneManager;
 
-		Ape::IMainWindow* mpMainWindow;
+		ape::IEventManager* mpEventManager;
 
-		Ape::DoubleQueue<Event> mEventDoubleQueue;
+		ape::ICoreConfig* mpCoreConfig;
 
-		Ape::Ogre21RenderPluginConfig mOgreRenderPluginConfig;
+		//ape::IMainWindow* mpMainWindow; ->megvátozott
 
-		Ape::NodeWeakPtr mUserNode;
+		ape::DoubleQueue<Event> mEventDoubleQueue;
+
+		ape::Ogre21RenderPluginConfig mOgreRenderPluginConfig;
+
+		ape::NodeWeakPtr mUserNode;
 
 		int mCameraCountFromConfig;
 
 		void processEventDoubleQueue();
 
-		void eventCallBack(const Ape::Event& event);
-
-		
+		void eventCallBack(const ape::Event& event);
 	};
-	
-	APE_PLUGIN_FUNC Ape::IPlugin* CreateOgre21RenderPlugin()
+
+	APE_PLUGIN_FUNC ape::IPlugin* CreateOgreRenderPlugin()
 	{
-		return new Ogre21RenderPlugin;
+		return new ape::Ogre21RenderPlugin;
 	}
 
-	APE_PLUGIN_FUNC void DestroyOgre21RenderPlugin(Ape::IPlugin *plugin)
+	APE_PLUGIN_FUNC void DestroyOgreRenderPlugin(ape::IPlugin *plugin)
 	{
-		delete (Ogre21RenderPlugin*)plugin;
+		delete (ape::Ogre21RenderPlugin*)plugin;
 	}
 
 	APE_PLUGIN_DISPLAY_NAME(THIS_PLUGINNAME);
@@ -177,7 +174,8 @@ namespace Ape
 	APE_PLUGIN_ALLOC()
 	{
 		std::cout << THIS_PLUGINNAME << "_CREATE" << std::endl;
-		ApeRegisterPlugin(THIS_PLUGINNAME, CreateOgre21RenderPlugin, DestroyOgre21RenderPlugin);
+		APE_LOG_DEBUG(THIS_PLUGINNAME << "_CREATE");
+		apeRegisterPlugin(THIS_PLUGINNAME, CreateOgreRenderPlugin, DestroyOgreRenderPlugin);
 		return 0;
 	}
 }
