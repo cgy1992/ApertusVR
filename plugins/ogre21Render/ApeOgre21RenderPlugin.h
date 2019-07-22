@@ -16,8 +16,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.*/
 
-#ifndef APE_OGRERENDERPLUGIN_H
-#define APE_OGRERENDERPLUGIN_H
+#ifndef APE_OGRE21RENDERPLUGIN_H
+#define APE_OGRE21RENDERPLUGIN_H
 
 //std includes
 #include <iostream>
@@ -31,9 +31,9 @@ SOFTWARE.*/
 #include "OgreLogManager.h"
 #include "OgreMaterial.h"
 #include "OgreManualObject.h"
-//#include "OgreManualObject2.h"
-//#include "OgreMesh2.h"
-//#include "OgreMeshManager2.h"
+#include "OgreManualObject2.h"
+#include "OgreMesh2.h"
+#include "OgreMeshManager2.h"
 #include "OgreMovableObject.h"
 #include "OgrePixelCountLodStrategy.h"
 #include "OgreRenderWindow.h"
@@ -41,12 +41,13 @@ SOFTWARE.*/
 #include "OgreRoot.h"
 #include "OgreSceneManager.h"
 #include "OgreSceneNode.h"
-//#include "OgreSubMesh2.h"
+#include "OgreSubMesh2.h"
 #include "OgreTechnique.h" 
 #include "OgreTextureManager.h"
 #include "OgreWindowEventUtilities.h"
-
-
+#include <OgreCamera.h>
+#include <OgreViewport.h>
+#include "OgreMaterialManager.h"
 
 
 
@@ -143,8 +144,6 @@ namespace ape
 		ape::IEventManager* mpEventManager;
 
 		ape::ICoreConfig* mpCoreConfig;
-
-		//ape::IMainWindow* mpMainWindow; ->megvátozott
 
 		ape::DoubleQueue<Event> mEventDoubleQueue;
 

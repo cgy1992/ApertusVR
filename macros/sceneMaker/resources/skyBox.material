@@ -8,7 +8,7 @@ material skyBox
 			depth_write off
 			texture_unit
 			{
-				cubic_texture sky.jpg combinedUVW
+				cubic_texture sky.dds combinedUVW
 				tex_address_mode clamp
 			}
 			rtshader_system

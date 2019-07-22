@@ -1,6 +1,5 @@
 {
   "plugins": [
-    "apeNodeJsPlugin",
     "apeOgre21RenderPlugin",
     "apeOisUserInputPlugin",
     "apeIndustry40Plugin"
@@ -25,8 +24,7 @@
     },
     "selected": "none",
     "resourceLocations": [
-      "/macros/sceneMaker/resources",
-      "/plugins/360Video/resources"
+      "/macros/sceneMaker/resources"
     ]
   }
 }

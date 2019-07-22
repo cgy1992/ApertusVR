@@ -270,6 +270,31 @@ namespace ape
 			return Ogre::Light::LightTypes(-1);
 		}
 	}
+	inline ape::Camera::ProjectionType ConversionFromOgre21(const Ogre::ProjectionType type)
+	{
+		switch (type)
+		{
+			case Ogre::ProjectionType::PT_ORTHOGRAPHIC:
+				return ape::Camera::ProjectionType::ORTHOGRAPHIC;
+			case Ogre::ProjectionType::PT_PERSPECTIVE:
+				return ape::Camera::ProjectionType::PERSPECTIVE;
+			default:
+				return ape::Camera::ProjectionType::INVALID;
+		}
+	}
+
+	inline Ogre::ProjectionType ConversionToOgre21(const ape::Camera::ProjectionType type)
+	{
+		switch (type)
+		{
+		case ape::Camera::ProjectionType::ORTHOGRAPHIC:
+			return Ogre::ProjectionType::PT_ORTHOGRAPHIC;
+		case ape::Camera::ProjectionType::PERSPECTIVE:
+			return Ogre::ProjectionType::PT_PERSPECTIVE;
+		default:
+			return Ogre::ProjectionType::PT_ORTHOGRAPHIC;
+		}
+	}
 }
 
 #endif
