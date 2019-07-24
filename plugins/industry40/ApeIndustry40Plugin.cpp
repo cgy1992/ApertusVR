@@ -43,8 +43,9 @@ void ape::apeIndustry40Plugin::Init()
 		light->setDiffuseColor(ape::Color(0.6f, 0.6f, 0.6f));
 		light->setSpecularColor(ape::Color(0.6f, 0.6f, 0.6f));
 	}
-	mpSceneMakerMacro->makeBackground();
-	mpSceneMakerMacro->makeGround();
+	mpSceneMakerMacro->makeModel("sphere1000.mesh");
+	//mpSceneMakerMacro->makeBackground();
+	//mpSceneMakerMacro->makeGround();
 	APE_LOG_FUNC_LEAVE();
 }
 

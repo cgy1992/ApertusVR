@@ -139,6 +139,9 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/common/include 
 	${OGRE_INCLUDE_DIRS}
 	${PATH_OGRE21}/Components/Hlms/Common
+	${PATH_OGRE21}/Components/Hlms/Unlit/include
+	${PATH_OGRE21}/Components/Hlms/Pbs/include
+	${PATH_OGRE21}/Components/MeshLodGenerator/include
 	${OGRE_HlmsPbs_INCLUDE_DIRS}
 	${OGRE_HlmsUnlit_INCLUDE_DIRS}
 	${OGRE_MeshLodGenerator_INCLUDE_DIRS}

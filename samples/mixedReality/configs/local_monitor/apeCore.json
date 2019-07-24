@@ -1,7 +1,6 @@
 {
   "plugins": [
     "apeOgre21RenderPlugin",
-    "apeOisUserInputPlugin",
     "apeIndustry40Plugin"
   ],
   "network": {

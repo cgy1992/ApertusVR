@@ -49,7 +49,24 @@ SOFTWARE.*/
 #include <OgreViewport.h>
 #include "OgreMaterialManager.h"
 
+#include "OgreLodConfig.h"
+#include "OgreMeshLodGenerator.h"
+#include "OgreLodWorkQueueInjectorListener.h"
+#include "OgreLodWorkQueueInjector.h"
+#include "OgrePixelCountLodStrategy.h"
+#include "OgreLodWorkQueueRequest.h"
+#include "OgreLodWorkQueueWorker.h"
+#include "OgreItem.h"
+#include "OgrePrerequisites.h"
 
+#include "OgreMesh.h"
+#include "OgreMeshManager.h"
+#include "OgreMeshSerializer.h"
+#include "OgreMeshSerializerImpl.h"
+#include "OgreMeshManager2.h"
+
+#include "OgreHlmsUnlit.h"
+#include "OgreHlmsPbs.h"
 
 //ApertusVR includes
 #include "managers/apeILogManager.h"
@@ -73,6 +90,7 @@ SOFTWARE.*/
 #include "managers/apeISceneManager.h"
 #include "sceneelements/apeICamera.h"
 #include "sceneelements/apeIPointCloud.h"
+#include "macros/userInput/apeUserInputMacro.h"
 #define APE_DOUBLEQUEUE_UNIQUE
 #include "utils/apeDoubleQueue.h"
 #include "managers/apeIEventManager.h"
@@ -125,19 +143,17 @@ namespace ape
 
 		Ogre::SceneManager* mpSceneMgr;
 
+		Ogre::CompositorManager2 * mpCompositorManager;
+
+		std::map<std::string, Ogre::Item*> mItemList;
+
 		std::vector<Ogre::Camera*> mOgreCameras;
 
-
+		std::map<std::string, Ogre::Light*> mLightList;
 
 		std::map<std::string, Ogre::RenderWindow*> mRenderWindows;
 
-
-
 		Ogre::HlmsManager* mpHlmsPbsManager;
-
-
-
-
 
 		ape::ISceneManager* mpSceneManager;
 
@@ -151,11 +167,16 @@ namespace ape
 
 		ape::NodeWeakPtr mUserNode;
 
+		ape::UserInputMacro* mpUserInputMacro;
+
+		ape::UserInputMacro::ViewPose mUserInputMacroPose;
+
 		int mCameraCountFromConfig;
 
 		void processEventDoubleQueue();
 
 		void eventCallBack(const ape::Event& event);
+
 	};
 
 	APE_PLUGIN_FUNC ape::IPlugin* CreateOgreRenderPlugin()
