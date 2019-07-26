@@ -1,0 +1,27 @@
+abstract hlms BaseSettingsAlphaBlend unlit
+{
+	scene_blend	alpha_blend
+	depth_check	off
+	depth_write	off
+	cull_mode	none
+}
+
+hlms Core/ProfilerCurrent unlit : BaseSettingsAlphaBlend
+{
+	diffuse_map ProfileCurrentBar.png
+}
+
+hlms Core/ProfilerAvg unlit : BaseSettingsAlphaBlend
+{
+	diffuse_map ProfileAvgBar.png
+}
+
+hlms Core/ProfilerMin unlit : BaseSettingsAlphaBlend
+{
+	diffuse_map ProfileMinBar.png
+}
+
+hlms Core/ProfilerMax unlit : BaseSettingsAlphaBlend
+{
+	diffuse_map ProfileMaxBar.png
+}

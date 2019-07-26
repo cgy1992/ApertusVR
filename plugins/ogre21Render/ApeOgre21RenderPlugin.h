@@ -67,6 +67,10 @@ SOFTWARE.*/
 
 #include "OgreHlmsUnlit.h"
 #include "OgreHlmsPbs.h"
+#include "OgreHlmsCommon.h"
+#include "OgreArchiveManager.h"
+#include <OgreZip.h>
+
 
 //ApertusVR includes
 #include "managers/apeILogManager.h"
@@ -176,6 +180,12 @@ namespace ape
 		void processEventDoubleQueue();
 
 		void eventCallBack(const ape::Event& event);
+
+		void registerHlms();
+
+		void loadresources();
+
+		void createRenderWindows();
 
 	};
 

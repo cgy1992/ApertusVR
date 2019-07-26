@@ -35,9 +35,9 @@ endfunction ()
 
 
 
-set(PATH_OGRE21DEPS ${CMAKE_SOURCE_DIR}/3rdParty/ogre21/Dependencies)
-set(PATH_OGRE21DEPS_OUT ${CMAKE_SOURCE_DIR}/3rdParty/ogre21/Dependencies)
-set(PATH_OGRE21 ${CMAKE_SOURCE_DIR}/3rdParty/ogre21)	
+set(PATH_OGRE21DEPS ${CMAKE_SOURCE_DIR}/3rdParty/ogre21/ogre/Dependencies)
+set(PATH_OGRE21DEPS_OUT ${CMAKE_SOURCE_DIR}/3rdParty/ogre21/ogre/Dependencies)
+set(PATH_OGRE21 ${CMAKE_SOURCE_DIR}/3rdParty/ogre21/ogre)	
 set(OGRE21_READY FALSE)
 
 
@@ -139,6 +139,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/common/include 
 	${OGRE_INCLUDE_DIRS}
 	${PATH_OGRE21}/Components/Hlms/Common
+	${PATH_OGRE21}/Components/Hlms/Common/include
 	${PATH_OGRE21}/Components/Hlms/Unlit/include
 	${PATH_OGRE21}/Components/Hlms/Pbs/include
 	${PATH_OGRE21}/Components/MeshLodGenerator/include
@@ -152,9 +153,10 @@ include_directories(
 	${RAPIDJSON_INCLUDE_DIR}
 	)
 add_library (apeOgre21RenderPlugin SHARED ${SOURCES} ${HEADERS})
-target_link_libraries (apeOgre21RenderPlugin apePluginManager apeSceneManager apeEventManager apeCoreConfig apeSystem ${OGRE_LIBRARIES} ${OGRE_HlmsPbs_LIBRARIES} ${OGRE_HlmsUnlit_LIBRARIES} ${OGRE_MeshLodGenerator_LIBRARIES}
-${OGRE_Plugin_ParticleFX_LIBRARIES}  ${OGRE_RenderSystem_Direct3D11_LIBRARIES} ${OGRE_RenderSystem_GL3Plus_LIBRARIES} )
+target_link_libraries (apeOgre21RenderPlugin apePluginManager apeSceneManager apeEventManager apeCoreConfig apeSystem ${OGRE_LIBRARIES} ${OGRE_HlmsPbs} ${OGRE_HlmsUnlit_LIBRARIES} ${OGRE_MeshLodGenerator_LIBRARIES}
+${OGRE_Plugin_ParticleFX_LIBRARIES}  ${OGRE_RenderSystem_Direct3D11_LIBRARIES} ${OGRE_RenderSystem_GL3Plus_LIBRARIES}  ${OGRE_Hlms_LIBRARIES} OgreHlmsPbs OgreHlmsUnlit)
 
+message("OgreHlms:  ${OGRE_Hlms_LIBRARIES}")
 
 set_property (TARGET apeOgre21RenderPlugin PROPERTY FOLDER "Plugins")
 set_property (TARGET apeOgre21RenderPlugin PROPERTY COMPILE_DEFINITIONS APE_SOURCE_DIR="${APE_SOURCE_DIR}")

@@ -901,6 +901,7 @@ void ape::Ogre21RenderPlugin::Init()
 	}
 
 	mpRoot = OGRE_NEW Ogre::Root("", "", "apeOgre21RenderPlugin.log");
+	//mpRoot = OGRE_NEW Ogre::Root("plugins_d.cfg", "", "apeOgre21RenderPlugin.log");
 
 	Ogre::LogManager::getSingleton().createLog("apeOgre21RenderPlugin.log", true, false, false);
 
@@ -930,102 +931,24 @@ void ape::Ogre21RenderPlugin::Init()
 		renderSystem = mpRoot->getRenderSystemByName("Open_GL3Plus Rendering Subsystem");
 
 
+
 	std::stringstream mediaFolder;
 	mediaFolder << APE_SOURCE_DIR << "/plugins/ogre21Render/media";
 
 	mpRoot->setRenderSystem(renderSystem);
 
-	if (mOgreRenderPluginConfig.renderSystem == "DX9")
-	{
-		renderSystem->setConfigOption("Resource Creation Policy", "Create on all devices");
-		renderSystem->setConfigOption("Multi device memory hint", "Auto hardware buffers management");
-	}
-
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem",Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem",Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripst", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/DebugPack.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 
 	for (auto resourceLocation : mpCoreConfig->getNetworkConfig().resourceLocations)
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resourceLocation, "FileSystem");
-
-	
-	Ogre::ConfigFile cf;
-	cf.load(mediaFolder.str()+ "resources2.cfg");
-
-#if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
-	Ogre::String rootHlmsFolder = Ogre::macBundlePath() + '/' +
-		cf.getSetting("DoNotUseAsResource", "Hlms", "");
-#else
-	Ogre::String rootHlmsFolder = mediaFolder.str() + cf.getSetting("DoNotUseAsResource", "Hlms", "");
-#endif
-
-	if (rootHlmsFolder.empty())
-		rootHlmsFolder = "./";
-	else if (*(rootHlmsFolder.end() - 1) != '/')
-		rootHlmsFolder += "/";
-
-	//At this point rootHlmsFolder should be a valid path to the Hlms data folder
-
-	Ogre::HlmsUnlit *hlmsUnlit = 0;
-	Ogre::HlmsPbs *hlmsPbs = 0;
-
-	//For retrieval of the paths to the different folders needed
-	Ogre::String mainFolderPath;
-	Ogre::StringVector libraryFoldersPaths;
-	Ogre::StringVector::const_iterator libraryFolderPathIt;
-	Ogre::StringVector::const_iterator libraryFolderPathEn;
-
-	Ogre::ArchiveManager &archiveManager = Ogre::ArchiveManager::getSingleton();
-
-	{
-		//Create & Register HlmsUnlit
-		//Get the path to all the subdirectories used by HlmsUnlit
-		Ogre::HlmsUnlit::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
-		Ogre::Archive *archiveUnlit = archiveManager.load(rootHlmsFolder + mainFolderPath,
-			"FileSystem", true);
-		Ogre::ArchiveVec archiveUnlitLibraryFolders;
-		libraryFolderPathIt = libraryFoldersPaths.begin();
-		libraryFolderPathEn = libraryFoldersPaths.end();
-		while (libraryFolderPathIt != libraryFolderPathEn)
-		{
-			Ogre::Archive *archiveLibrary =
-				archiveManager.load(rootHlmsFolder + *libraryFolderPathIt, "FileSystem", true);
-			archiveUnlitLibraryFolders.push_back(archiveLibrary);
-			++libraryFolderPathIt;
-		}
-
-		//Create and register the unlit Hlms
-		hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit(archiveUnlit, &archiveUnlitLibraryFolders);
-		Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsUnlit);
-	}
-
-	{
-		//Create & Register HlmsPbs
-		//Do the same for HlmsPbs:
-		Ogre::HlmsPbs::getDefaultPaths(mainFolderPath, libraryFoldersPaths);
-		Ogre::Archive *archivePbs = archiveManager.load(rootHlmsFolder + mainFolderPath,
-			"FileSystem", true);
-
-		//Get the library archive(s)
-		Ogre::ArchiveVec archivePbsLibraryFolders;
-		libraryFolderPathIt = libraryFoldersPaths.begin();
-		libraryFolderPathEn = libraryFoldersPaths.end();
-		while (libraryFolderPathIt != libraryFolderPathEn)
-		{
-			Ogre::Archive *archiveLibrary =
-				archiveManager.load(rootHlmsFolder + *libraryFolderPathIt, "FileSystem", true);
-			archivePbsLibraryFolders.push_back(archiveLibrary);
-			++libraryFolderPathIt;
-		}
-
-		//Create and register
-		hlmsPbs = OGRE_NEW Ogre::HlmsPbs(archivePbs, &archivePbsLibraryFolders);
-		Ogre::Root::getSingleton().getHlmsManager()->registerHlms(hlmsPbs);
-	}
-
-
 
 
 	mpRoot->initialise(false, "ape");
@@ -1084,13 +1007,10 @@ void ape::Ogre21RenderPlugin::Init()
 
 		}
 	}
-	//Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
-	
-	
 
-	// Initialise, parse scripts etc
-	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
-	//mpCompositorManager = mpRoot->getCompositorManager2();
+
+
+
 
 	int mainWindowID = 0; //first window will be the main window
 	Ogre::RenderWindowDescription mainWindowDesc = winDescList[mainWindowID];
@@ -1101,5 +1021,96 @@ void ape::Ogre21RenderPlugin::Init()
 	ape::WindowConfig windowConfig(mainWindowDesc.name, mOgreRenderPluginConfig.renderSystem, mainWindowHnd, mOgreRenderPluginConfig.ogreRenderWindowConfigList[mainWindowID].width,
 		mOgreRenderPluginConfig.ogreRenderWindowConfigList[mainWindowID].height);
 	mpCoreConfig->setWindowConfig(windowConfig);
+
+	//Must be after creating Rendering Window
+	registerHlms();
+
+
+
+	// Initialise, parse scripts etc
+	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
+	//mpCompositorManager = mpRoot->getCompositorManager2();
+
 	APE_LOG_FUNC_LEAVE();
+}
+
+void ape::Ogre21RenderPlugin::registerHlms()
+{
+	static const Ogre::String OGRE_RENDERSYSTEM_DIRECTX11 = "Direct3D11 Rendering Subsystem";
+	static const Ogre::String OGRE_RENDERSYSTEM_OPENGL3PLUS = "OpenGL 3+ Rendering Subsystem";
+	static const Ogre::String OGRE_RENDERSYSTEM_METAL = "Metal Rendering Subsystem";
+
+	std::stringstream mediaFolder;
+	mediaFolder << APE_SOURCE_DIR << "/plugins/ogre21Render/media";
+
+	Ogre::String dataFolder = mediaFolder.str() + "/";
+	Ogre::RenderSystem* renderSystem =  mpRoot->getRenderSystem();
+
+	Ogre::String shaderSyntax = "GLSL";
+	if (renderSystem->getName() == OGRE_RENDERSYSTEM_DIRECTX11)
+		shaderSyntax = "HLSL";
+	else if (renderSystem->getName() == OGRE_RENDERSYSTEM_METAL)
+		shaderSyntax = "Metal";
+
+	Ogre::Archive* archiveLibrary = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Common/" + shaderSyntax,
+		"FileSystem", true);
+	Ogre::Archive* archiveLibraryAny = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Common/Any",
+		"FileSystem", true);
+	Ogre::Archive* archivePbsLibraryAny = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Pbs/Any",
+		"FileSystem", true);
+	Ogre::Archive* archiveUnlitLibraryAny = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Unlit/Any",
+		"FileSystem", true);
+
+	Ogre::ArchiveVec library;
+	library.push_back(archiveLibrary);
+	library.push_back(archiveLibraryAny);
+
+	Ogre::Archive* archiveUnlit = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Unlit/" + shaderSyntax,
+		"FileSystem", true);
+
+	library.push_back(archiveUnlitLibraryAny);
+	Ogre::HlmsUnlit* hlmsUnlit = OGRE_NEW Ogre::HlmsUnlit(archiveUnlit, &library);
+	mpRoot->getHlmsManager()->registerHlms(hlmsUnlit);
+	library.pop_back();
+
+	Ogre::Archive* archivePbs = Ogre::ArchiveManager::getSingletonPtr()->load(
+		dataFolder + "Hlms/Pbs/" + shaderSyntax,
+		"FileSystem", true);
+
+	library.push_back(archivePbsLibraryAny);
+	Ogre::HlmsPbs* hlmsPbs = OGRE_NEW Ogre::HlmsPbs(archivePbs, &library);
+	mpRoot->getHlmsManager()->registerHlms(hlmsPbs);
+	library.pop_back();
+
+	if (renderSystem->getName() == "Direct3D11 Rendering Subsystem")
+	{
+		//Set lower limits 512kb instead of the default 4MB per Hlms in D3D 11.0
+		//and below to avoid saturating AMD's discard limit (8MB) or
+		//saturate the PCIE bus in some low end machines.
+		bool supportsNoOverwriteOnTextureBuffers;
+		renderSystem->getCustomAttribute("MapNoOverwriteOnDynamicBufferSRV",
+			&supportsNoOverwriteOnTextureBuffers);
+
+		if (!supportsNoOverwriteOnTextureBuffers)
+		{
+			hlmsPbs->setTextureBufferDefaultSize(512 * 1024);
+			hlmsUnlit->setTextureBufferDefaultSize(512 * 1024);
+		}
+	}
+
+}
+
+void ape::Ogre21RenderPlugin::loadresources()
+{
+
+}
+
+void ape::Ogre21RenderPlugin::createRenderWindows()
+{
+
 }
