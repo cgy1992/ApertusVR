@@ -65,6 +65,7 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 	mOgreRenderPluginConfig = ape::Ogre21RenderPluginConfig();
 	mOgreCameras = std::vector<Ogre::Camera*>();
 	mCameraCountFromConfig = 0;
+//	mpOverlaySys = nullptr;
 
 	APE_LOG_FUNC_LEAVE();
 }
@@ -119,13 +120,13 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									ogreOldParentNode->removeChild(ogreNode);
 								}
 
-								if (mpSceneMgr->getSceneNode(ogreOldParentNode->getId()))
-								{
+								//if (mpSceneMgr->getSceneNode(ogreOldParentNode->getId()))
+								//{
 									auto ogreNodeList = mpSceneMgr->findSceneNodes(parentNode->getName());
 									auto ogreNewParentNode = mpSceneMgr->getSceneNode(ogreNodeList[0]->getId());
 									ogreNewParentNode->addChild(ogreNode);
 
-								}
+								//}
 							}
 						}
 						break;
@@ -235,12 +236,16 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					break;
 				case ape::Event::Type::GEOMETRY_FILE_PARENTNODE:
 				{
-					//ezt még nemtom
-					//auto geomList = mpSceneMgr->findMovableObjects(, gemetryName);
-					/*if (mpSceneMgr->)
+					if (mItemList[geometryName] != nullptr)
 					{
+						auto ogreEntity = mItemList[geometryName];
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+						{
+							ogreParentNode->attachObject(ogreEntity);
+						}
 
-					}*/
+					}
 				}
 				case ape::Event::Type::GEOMETRY_FILE_DELETE:
 					;
@@ -252,37 +257,24 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						std::string fileExtension = fileName.substr(fileName.find_last_of("."));
 						if (fileExtension == ".mesh")
 						{
-							/*Ogre::v1::MeshPtr v1Mesh;
+							//---------------------
 							Ogre::MeshPtr v2Mesh;
-							v1Mesh = Ogre::v1::MeshManager::getSingleton().load(
-								fileName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,
-								Ogre::v1::HardwareBuffer::HBU_STATIC, Ogre::v1::HardwareBuffer::HBU_STATIC);
-
-							//Create a v2 mesh to import to, with a different name (arbitrary).
-							v2Mesh = Ogre::MeshManager::getSingleton().createManual(
-								fileName+" Imported", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-
-							bool halfPosition = true;
-							bool halfUVs = true;
-							bool useQtangents = true;
-
-							//Import the v1 mesh to v2
-							v2Mesh->importV1(v1Mesh.get(), halfPosition, halfUVs, useQtangents);
-
-							//We don't need the v1 mesh. Free CPU memory, get it out of the GPU.
-							//Leave it loaded if you want to use athene with v1 Entity.
-							v1Mesh->unload();
-							std::cout << fileName + " Imported" << std::endl;
-							//Ogre::Item* planeItem = mpSceneMgr->createItem(v2Mesh, Ogre::SCENE_DYNAMIC);
-							Ogre::Item* planeItem = mpSceneMgr->createItem(fileName + " Imported",Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME,Ogre::SCENE_DYNAMIC);*/
 
 							
+							v2Mesh = Ogre::MeshManager::getSingleton().load(
+								fileName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+							
+							Ogre::Item *item = mpSceneMgr->createItem(fileName,
+								Ogre::ResourceGroupManager::
+								AUTODETECT_RESOURCE_GROUP_NAME,
+								Ogre::SCENE_DYNAMIC);
+
+							//---------------------
 
 
-
-
-							Ogre::Item* planeItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
-							mItemList[geometryName] = planeItem;
+							//Ogre::Item* Item = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+							mItemList[geometryName] = item;
 						}
 					}
 					  
@@ -348,7 +340,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				{
 				case ape::Event::Type::LIGHT_CREATE:
 				{
-					Ogre::Light* ogreLight = mpSceneMgr->createLight();
+ 					Ogre::Light* ogreLight = mpSceneMgr->createLight();
 					ogreLight->setName(light->getName());
 					mLightList[light->getName()] = ogreLight;
 					Ogre::SceneNode* lightNode = mpSceneMgr->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(Ogre::SCENE_DYNAMIC);
@@ -385,7 +377,11 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					{
 						auto parentList = mpSceneMgr->findSceneNodes(parentNode->getName());
 						if (auto ogreParentNode = mpSceneMgr->getSceneNode(parentList[0]->getId()))
+						{
+							ogreLight->detachFromParent();
 							ogreParentNode->attachObject(ogreLight);
+						}
+							
 					}
 					ogreLight->setDirection(ape::ConversionToOgre21(light->getLightDirection()));
 				}
@@ -477,6 +473,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									camera->setNearClipDistance(cameraSetting.nearClip);
 									camera->setFarClipDistance(cameraSetting.farClip);
 									camera->setFOVy(cameraSetting.fovY.toRadian());
+									
 								}
 							}
 						}
@@ -516,12 +513,25 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 												{
 													ogreViewPort->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 												}*///nincs
+												//------------------
+
+
+
+												Ogre::IdString workspaceName("MyOwnWorkspace");
+												Ogre::CompositorManager2* compositorManager = mpRoot->getCompositorManager2();
+												if (!compositorManager->hasWorkspaceDefinition(workspaceName))
+													compositorManager->createBasicWorkspaceDef("MyOwnWorkspace", Ogre::ColourValue(0.6f, 0.0f, 0.6f));
+
+												//compositorManager->addWorkspaceDefinition("WorkSpace01");
+												compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera, workspaceName, true);
+												//--------
 											}
 										}
 									}
 								}
 							}
 						}
+						ogreCamera->lookAt(Ogre::Vector3(0, 0, 0));
 					}
 				}
 					break;
@@ -539,6 +549,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									if (ogreCamera->getParentNode())
 										ogreCamera->detachFromParent();
 									ogreParentNode->attachObject(ogreCamera);
+									//ogreCamera->setPosition(10, 10, 10);
 								}
 							}
 						}
@@ -610,12 +621,13 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				break;
 				case ape::Event::Type::CAMERA_VISIBILITY:
 				{
-					/*if (mpSceneMgr->findCamera(event.subjectName))
+					if (mpSceneMgr->findCamera(event.subjectName))
 					{
-						Ogre::Viewport* ogreViewport = mpSceneMgr->findCamera(event.subjectName)->getViewport();
-						if (ogreViewport)
-							ogreViewport->setVisibilityMask(camera->getVisibilityMask());
-					}*/
+						Ogre::Viewport* ogreViewport = mpSceneMgr->findCamera(event.subjectName)->getLastViewport();
+						//if (ogreViewport)
+							/*ogreViewport->_setVisibilityMask(camera->getVisibilityMask,camera->getLi );
+							ogreViewport->setVisibilityMask(camera->getVisibilityMask());*/
+					}
 				}
 				break;
 				}
@@ -667,7 +679,7 @@ void ape::Ogre21RenderPlugin::Run()
 	APE_LOG_FUNC_ENTER();
 	try
 	{
-		mpRoot->renderOneFrame();
+		//mpRoot->renderOneFrame();
 		mpRoot->startRendering();
 	}
 	catch (const Ogre::RenderingAPIException& ex)
@@ -715,24 +727,6 @@ void ape::Ogre21RenderPlugin::Step()
 
 void ape::Ogre21RenderPlugin::Init()
 {
-	std::cout << "Init started" << std::endl;
-	/*if (auto userNode = mpSceneManager->getNode(mpSystemConfig->getSceneSessionConfig().generatedUniqueUserNodeName).lock())
-		mUserNode = userNode;
-	if (mpSystemConfig->getSceneSessionConfig().participantType == ape::SceneSession::ParticipantType::HOST || mpSystemConfig->getSceneSessionConfig().participantType == ape::SceneSession::ParticipantType::GUEST)
-	{
-		if (auto userNode = mUserNode.lock())
-		{
-			if (auto userNameText = std::static_pointer_cast<ape::ITextGeometry>(mpSceneManager->createEntity(userNode->getName(), ape::Entity::GEOMETRY_TEXT).lock()))
-			{
-				userNameText->setCaption(userNode->getName());
-				userNameText->setOffset(ape::Vector3(0.0f, 1.0f, 0.0f));
-				userNameText->setParentNode(userNode);
-			}
-		}
-	}*/
-
-
-
 	APE_LOG_FUNC_ENTER();
 	/*mpUserInputMacro = ape::UserInputMacro::getSingletonPtr();
 	mUserInputMacroPose = ape::UserInputMacro::ViewPose();*/
@@ -901,11 +895,11 @@ void ape::Ogre21RenderPlugin::Init()
 	}
 
 	mpRoot = OGRE_NEW Ogre::Root("", "", "apeOgre21RenderPlugin.log");
-	//mpRoot = OGRE_NEW Ogre::Root("plugins_d.cfg", "", "apeOgre21RenderPlugin.log");
+
 
 	Ogre::LogManager::getSingleton().createLog("apeOgre21RenderPlugin.log", true, false, false);
 
-
+	//mpOverlaySys = OGRE_NEW Ogre::v1::OverlaySystem();
 
 #if defined (_DEBUG)
 	Ogre::LogManager::getSingleton().setLogDetail(Ogre::LL_BOREME);
@@ -937,7 +931,7 @@ void ape::Ogre21RenderPlugin::Init()
 
 	mpRoot->setRenderSystem(renderSystem);
 
-	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem",Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripst", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
@@ -945,12 +939,22 @@ void ape::Ogre21RenderPlugin::Init()
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	//	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/DebugPack.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	/*Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/DebugPack.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/cubemap.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/cubemapsJS.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/dragon.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/fresneldemo.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/OgreCore.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/ogredance.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/profiler.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/SdkTrays.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/Sinbad.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/skybox.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);*/
 
 	for (auto resourceLocation : mpCoreConfig->getNetworkConfig().resourceLocations)
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resourceLocation, "FileSystem");
 
-
+	mpRoot->getRenderSystem()->setConfigOption("sRGB Gamma Conversion", "Yes");
 	mpRoot->initialise(false, "ape");
 
 	mpHlmsPbsManager = mpRoot->getHlmsManager();
@@ -996,8 +1000,12 @@ void ape::Ogre21RenderPlugin::Init()
 			std::stringstream monitorIndexSS;
 			monitorIndexSS << mOgreRenderPluginConfig.ogreRenderWindowConfigList[i].monitorIndex;
 			winDesc.miscParams["monitorIndex"] = monitorIndexSS.str().c_str();
+			//--
+			winDesc.miscParams["gamma"] = "true";
+			//--
 			winDescList.push_back(winDesc);
 			APE_LOG_DEBUG("winDesc:" << " name=" << winDesc.name << " width=" << winDesc.width << " height=" << winDesc.height << " fullScreen=" << winDesc.useFullScreen);
+
 			mRenderWindows[winDesc.name] = mpRoot->createRenderWindow(winDesc.name, winDesc.width, winDesc.height, winDesc.useFullScreen, &winDesc.miscParams);
 			mRenderWindows[winDesc.name]->setDeactivateOnFocusChange(false);
 			mRenderWindows[winDesc.name]->setHidden(mOgreRenderPluginConfig.ogreRenderWindowConfigList[i].hidden);
@@ -1029,7 +1037,6 @@ void ape::Ogre21RenderPlugin::Init()
 
 	// Initialise, parse scripts etc
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
-	//mpCompositorManager = mpRoot->getCompositorManager2();
 
 	APE_LOG_FUNC_LEAVE();
 }
@@ -1102,15 +1109,5 @@ void ape::Ogre21RenderPlugin::registerHlms()
 			hlmsUnlit->setTextureBufferDefaultSize(512 * 1024);
 		}
 	}
-
-}
-
-void ape::Ogre21RenderPlugin::loadresources()
-{
-
-}
-
-void ape::Ogre21RenderPlugin::createRenderWindows()
-{
 
 }

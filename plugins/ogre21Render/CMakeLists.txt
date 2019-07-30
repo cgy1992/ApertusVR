@@ -143,6 +143,7 @@ include_directories(
 	${PATH_OGRE21}/Components/Hlms/Unlit/include
 	${PATH_OGRE21}/Components/Hlms/Pbs/include
 	${PATH_OGRE21}/Components/MeshLodGenerator/include
+	${PATH_OGRE21}/OgreMain/include/Compositor
 	${OGRE_HlmsPbs_INCLUDE_DIRS}
 	${OGRE_HlmsUnlit_INCLUDE_DIRS}
 	${OGRE_MeshLodGenerator_INCLUDE_DIRS}

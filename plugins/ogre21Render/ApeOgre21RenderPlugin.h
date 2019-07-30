@@ -62,6 +62,7 @@ SOFTWARE.*/
 #include "OgreMesh.h"
 #include "OgreMeshManager.h"
 #include "OgreMeshSerializer.h"
+#include <OgreMesh2Serializer.h>
 #include "OgreMeshSerializerImpl.h"
 #include "OgreMeshManager2.h"
 
@@ -69,7 +70,12 @@ SOFTWARE.*/
 #include "OgreHlmsPbs.h"
 #include "OgreHlmsCommon.h"
 #include "OgreArchiveManager.h"
-#include <OgreZip.h>
+#include "OgreHlmsPbsDatablock.h"
+
+
+#include <OgreCompositorManager2.h>
+
+
 
 
 //ApertusVR includes
@@ -147,6 +153,8 @@ namespace ape
 
 		Ogre::SceneManager* mpSceneMgr;
 
+//		Ogre::v1::OverlaySystem* mpOverlaySys;
+
 		Ogre::CompositorManager2 * mpCompositorManager;
 
 		std::map<std::string, Ogre::Item*> mItemList;
@@ -182,10 +190,6 @@ namespace ape
 		void eventCallBack(const ape::Event& event);
 
 		void registerHlms();
-
-		void loadresources();
-
-		void createRenderWindows();
 
 	};
 
