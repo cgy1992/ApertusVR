@@ -21,7 +21,7 @@ namespace Demo
 {
     class SdlInputHandler;
 
-    class  GraphicsSystem : public BaseSystem, public Ogre::UniformScalableTask
+    class GraphicsSystem : public BaseSystem, public Ogre::UniformScalableTask
     {
     protected:
         BaseSystem          *mLogicSystem;

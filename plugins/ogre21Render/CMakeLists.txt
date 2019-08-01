@@ -79,24 +79,23 @@ if (NOT OGRE21_READY)
 
 
 #build ogre21deps
-#	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
-#		message (STATUS "Configuring ogre dependencies for ${CONF}, please wait.....")
-#		execute_process ( 
-#			COMMAND ${CMAKE_COMMAND}
-#			-DOGREDEPS_BUILD_SDL2:BOOL=OFF
-#			-G ${CMAKE_GENERATOR}
-#			.
-#			WORKING_DIRECTORY ${PATH_OGRE21DEPS}
-#			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
-#			)
-#		reportError (output if error)
-#		message (STATUS "Building ogre dependencies for ${CONF}, please wait.....")
-#		execute_process ( 
-#			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target install
-#			WORKING_DIRECTORY ${PATH_OGRE21DEPS}
-#			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
-#		reportError (output if error)
-#	endforeach ()
+	foreach (CONF ${CMAKE_CONFIGURATION_TYPES})
+		message (STATUS "Configuring ogre dependencies for ${CONF}, please wait.....")
+		execute_process ( 
+			COMMAND ${CMAKE_COMMAND}
+			-G ${CMAKE_GENERATOR}
+			.
+			WORKING_DIRECTORY ${PATH_OGRE21DEPS}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output
+			)
+		reportError (output if error)
+		message (STATUS "Building ogre dependencies for ${CONF}, please wait.....")
+		execute_process ( 
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target all_build install
+			WORKING_DIRECTORY ${PATH_OGRE21DEPS}
+			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
+		reportError (output if error)
+	endforeach ()
 
 
 #build ogre2.1
@@ -104,10 +103,6 @@ if (NOT OGRE21_READY)
 		message (STATUS "Configuring ogre for ${CONF}, please wait.....")
 		execute_process ( 
 				COMMAND ${CMAKE_COMMAND} 
-				-DOGRE_DEPENDENCIES_DIR:PATH=${PATH_OGRE21DEPS_OUT}
-				-DOGRE_BUILD_SAMPLES:BOOL=FALSE
-				-DOGRE_INSTALL_SAMPLES=OFF
-				-DOGREDEPS_BUILD_SDL2:BOOL=OFF
 				-G ${CMAKE_GENERATOR} 
 				.
 				WORKING_DIRECTORY ${PATH_OGRE21}
@@ -116,7 +111,7 @@ if (NOT OGRE21_READY)
 		reportError (output if error)
 		message (STATUS "Building ogre2.1 for ${CONF}, please wait.....")
 		execute_process ( 
-			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target install
+			COMMAND ${CMAKE_COMMAND} --build . --config ${CONF} --target all_build
 			WORKING_DIRECTORY ${PATH_OGRE21}
 			RESULT_VARIABLE error OUTPUT_VARIABLE output ERROR_VARIABLE output)
 		reportError (output if error)

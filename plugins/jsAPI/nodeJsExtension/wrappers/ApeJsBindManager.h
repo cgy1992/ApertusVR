@@ -406,11 +406,11 @@ public:
 		return success;
 	}
 
-	PbsPassJsPtr createPbsPass(std::string name)
+/*	PbsPassJsPtr createPbsPass(std::string name)
 	{
 		APE_LOG_FUNC_ENTER();
 		APE_LOG_FUNC_LEAVE();
-		return PbsPassJsPtr(mpSceneManager->createEntity(name, ape::Entity::PASS_PBS));
+		return PbsPassJsPtr(mpSceneManager->createEntity(name, ape::Entity::MATERIAL_PBS));
 	}
 
 	bool getPbsPass(std::string name, nbind::cbFunction &done)
@@ -420,7 +420,7 @@ public:
 		auto entityWeakPtr = mpSceneManager->getEntity(name);
 		if (auto entity = entityWeakPtr.lock())
 		{
-			if (auto pbsPass = std::dynamic_pointer_cast<ape::IPbsPass>(entity))
+			if (auto pbsPass = std::dynamic_pointer_cast<ape::IPbsMaterial>(entity))
 			{
 				success = true;
 				done(!success, PbsPassJsPtr(entityWeakPtr));
@@ -438,7 +438,7 @@ public:
 		}
 		APE_LOG_FUNC_LEAVE();
 		return success;
-	}
+	}*/
 
 	ManualPassJsPtr createManualPass(std::string name)
 	{
@@ -556,8 +556,8 @@ NBIND_CLASS(JsBindManager)
 	method(createManualMaterial);
 	method(getManualMaterial);
 
-	method(createPbsPass);
-	method(getPbsPass);
+	//method(createPbsPass);
+	//method(getPbsPass);
 
 	method(createManualPass);
 	method(getManualPass);

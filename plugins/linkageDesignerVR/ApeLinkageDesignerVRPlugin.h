@@ -44,7 +44,7 @@ SOFTWARE.*/
 #include "sceneelements/apeILight.h"
 #include "sceneelements/apeIManualMaterial.h"
 #include "sceneelements/apeINode.h"
-#include "sceneelements/apeIPbsPass.h"
+#include "sceneelements/apeIPbsMaterial.h"
 #include "sceneelements/apeIPlaneGeometry.h"
 #include "sceneelements/apeISphereGeometry.h"
 #include "sceneelements/apeITextGeometry.h"

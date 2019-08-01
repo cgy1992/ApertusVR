@@ -38,7 +38,7 @@ SOFTWARE.*/
 #include "apeFileMaterialImpl.h"
 #include "apeCameraImpl.h"
 #include "apeManualMaterialImpl.h"
-#include "apePbsPassImpl.h"
+#include "apePbsMaterialImpl.h"
 #include "apeManualPassImpl.h"
 #include "apeManualTextureImpl.h"
 #include "apeBrowserImpl.h"
@@ -265,12 +265,12 @@ ape::EntityWeakPtr ape::SceneManagerImpl::createEntity(std::string name, ape::En
 				replicaManager->Reference(entity.get());
 			return entity;
 		}
-		case ape::Entity::PASS_PBS:
+		case ape::Entity::MATERIAL_PBS:
 		{
 			APE_LOG_TRACE("type: PASS_PBS");
-			auto entity = std::make_shared<ape::PbsPassImpl>(name, ((ape::SceneNetworkImpl*)mpSceneNetwork)->isHost());
+			auto entity = std::make_shared<ape::PbsMaterialImpl>(name, ((ape::SceneNetworkImpl*)mpSceneNetwork)->isHost());
 			mEntities.insert(std::make_pair(name, entity));
-			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::PASS_PBS_CREATE));
+			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::MATERIAL_PBS_CREATE));
 			if (auto replicaManager = ((ape::SceneNetworkImpl*)mpSceneNetwork)->getReplicaManager().lock())
 				replicaManager->Reference(entity.get());
 			return entity;
@@ -425,8 +425,8 @@ void ape::SceneManagerImpl::deleteEntity(std::string name)
 		case ape::Entity::MATERIAL_MANUAL:
 			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::MATERIAL_MANUAL_DELETE));
 			break;
-		case ape::Entity::PASS_PBS:
-			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::PASS_PBS_DELETE));
+		case ape::Entity::MATERIAL_PBS:
+			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::MATERIAL_PBS_DELETE));
 			break;
 		case ape::Entity::PASS_MANUAL:
 			((ape::EventManagerImpl*)mpEventManager)->fireEvent(ape::Event(name, ape::Event::Type::PASS_MANUAL_DELETE));

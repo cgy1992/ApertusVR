@@ -50,7 +50,7 @@ SOFTWARE.*/
 #include "sceneelements/apeIIndexedLineSetGeometry.h"
 #include "sceneelements/apeIManualMaterial.h"
 #include "sceneelements/apeIManualPass.h"
-#include "sceneelements/apeIPbsPass.h"
+#include "sceneelements/apeIPbsMaterial.h"
 #include "utils/apeInterpolator.h"
 #include "sceneelements/apeIFileGeometry.h"
 #include "sceneelements/apeIPointCloud.h"

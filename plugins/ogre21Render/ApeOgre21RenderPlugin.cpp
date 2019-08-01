@@ -50,7 +50,7 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 	mpEventManager->connectEvent(ape::Event::Group::GEOMETRY_INDEXEDLINESET, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
 	mpEventManager->connectEvent(ape::Event::Group::MATERIAL_FILE, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
 	mpEventManager->connectEvent(ape::Event::Group::MATERIAL_MANUAL, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
-	mpEventManager->connectEvent(ape::Event::Group::PASS_PBS, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
+	mpEventManager->connectEvent(ape::Event::Group::MATERIAL_PBS, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
 	mpEventManager->connectEvent(ape::Event::Group::PASS_MANUAL, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
 	mpEventManager->connectEvent(ape::Event::Group::TEXTURE_MANUAL, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
 	mpEventManager->connectEvent(ape::Event::Group::TEXTURE_UNIT, std::bind(&Ogre21RenderPlugin::eventCallBack, this, std::placeholders::_1));
@@ -65,7 +65,7 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 	mOgreRenderPluginConfig = ape::Ogre21RenderPluginConfig();
 	mOgreCameras = std::vector<Ogre::Camera*>();
 	mCameraCountFromConfig = 0;
-//	mpOverlaySys = nullptr;
+
 
 	APE_LOG_FUNC_LEAVE();
 }
@@ -119,14 +119,10 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								{
 									ogreOldParentNode->removeChild(ogreNode);
 								}
+								auto ogreNodeList = mpSceneMgr->findSceneNodes(parentNode->getName());
+								auto ogreNewParentNode = mpSceneMgr->getSceneNode(ogreNodeList[0]->getId());
+								ogreNewParentNode->addChild(ogreNode);
 
-								//if (mpSceneMgr->getSceneNode(ogreOldParentNode->getId()))
-								//{
-									auto ogreNodeList = mpSceneMgr->findSceneNodes(parentNode->getName());
-									auto ogreNewParentNode = mpSceneMgr->getSceneNode(ogreNodeList[0]->getId());
-									ogreNewParentNode->addChild(ogreNode);
-
-								//}
 							}
 						}
 						break;
@@ -162,7 +158,6 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						}
 					}
 				}
-
 			}
 		}
 		else if (event.group == ape::Event::Group::MATERIAL_FILE)
@@ -190,6 +185,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				{
 					if (Ogre::MaterialManager::getSingleton().resourceExists(materialName))
 						mpSceneMgr->setSkyBox(true, materialName);
+
 				}
 				break;
 				case ape::Event::Type::MATERIAL_FILE_TEXTURE:
@@ -270,6 +266,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								AUTODETECT_RESOURCE_GROUP_NAME,
 								Ogre::SCENE_DYNAMIC);
 
+
 							//---------------------
 
 
@@ -284,19 +281,14 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				break;
 				case ape::Event::Type::GEOMETRY_FILE_MERGESUBMESHES:
 				{
-					if (geometryFile->isMergeSubMeshes());
-					{
-						/*if (mpSceneMgr->) // itt is kell hasEntity !!!!!!!
-						{
-
-						}*/
-					}
+					//Ogre 2.1 not support
 				}
 				break;
 				case ape::Event::Type::GEOMETRY_FILE_EXPORT:
 				{
 					if (geometryFile->isExportMesh())
 					{
+						Ogre::MeshSerializer mMeshSerializer(0);
 						if (fileName.find_first_of(".") != std::string::npos)
 						{
 							std::string fileExtension = fileName.substr(fileName.find_last_of("."));
@@ -305,21 +297,88 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								auto mesh = Ogre::MeshManager::getSingleton().getByName(fileName);
 								if (!mesh.isNull())
 								{
-									//mash not implemented
-									//mMeshSerializer.exportMesh(mesh.getPointer(), fileName);
+									mMeshSerializer.exportMesh(mesh.getPointer(), fileName);
 								}
 							}
 						}
-						/*else if (mpSceneMgr->hasManualObject(geometryName)) -> ez még nem jo
+						else if (mManualObjectList[geometryName])
 						{
-
-						}*/
+							auto ogreManual = mManualObjectList[geometryName];
+							std::stringstream meshName;
+							meshName << geometryName << ".mesh";
+							if (Ogre::MeshManager::getSingleton().getByName(meshName.str()).isNull())
+							{
+								
+								Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(meshName.str(),Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME );
+								if (!mesh.isNull())
+								{
+									mMeshSerializer.exportMesh(mesh.getPointer(), meshName.str());
+									//Ogre::Mesh::SubMeshIterator subMeshIterator = mesh->getSubMeshIterator();
+									Ogre::SubMesh* subMesh = nullptr;
+									int i = 0;
+									auto subMeshNum = mesh->getNumSubMeshes();
+									auto subMeshVec = mesh->getSubMeshes();
+									while (i<subMeshNum)
+									{
+										subMesh = subMeshVec[i];
+										std::string materialName = subMesh->getMaterialName();
+										auto ogreMaterial = Ogre::MaterialManager::getSingletonPtr()->getByName(materialName);
+										if (!ogreMaterial.isNull())
+										{
+											std::string filePath = ogreManual->getName();
+											std::size_t found = filePath.find_last_of("/\\");
+											filePath = filePath.substr(0, found + 1);
+											std::string materialFileName = materialName;
+											//TODO_apeOgreRenderPlugin automatic filesystem check for filenames and coding conversion
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), '<'), materialFileName.end());
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), '>'), materialFileName.end());
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), '/'), materialFileName.end());
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), '/\\'), materialFileName.end());
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), ':'), materialFileName.end());
+											materialFileName.erase(std::remove(materialFileName.begin(), materialFileName.end(), ','), materialFileName.end());
+											/*std::wstring wMaterialFileName = utf8_decode(materialFileName.c_str());
+											std::wcout << wMaterialFileName << std::endl;*/
+											std::size_t materialFileNameHash = std::hash<std::string>{}(materialFileName);
+											std::stringstream materialFilePath;
+											materialFilePath << filePath << materialFileNameHash << ".material";
+											std::ifstream materialFile(materialFilePath.str());
+											if (!materialFile)
+												mMaterialSerializer.exportMaterial(ogreMaterial, materialFilePath.str());
+										}
+									}
+									mpSceneMgr->destroyManualObject(ogreManual);
+									auto ogreEntity = mpSceneMgr->createEntity(geometryName, meshName.str());
+								}
+							}
+						}
 					}
 				}
 				break;
-				/* from GEOMETRY_FILE_MATERIAL */
-
-
+				case ape::Event::Type::GEOMETRY_FILE_MATERIAL:
+				{
+					if (mItemList[geometryName])
+					{
+						auto ogreItem = mItemList[geometryName];
+						if (auto material = geometryFile->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							if (!ogreMaterial.isNull())
+								ogreItem->setMaterial(ogreMaterial);
+						}
+						
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_FILE_VISIBILITY:
+				{
+					if (mItemList[geometryName])
+					{
+						auto ogreItem = mItemList[geometryName];
+						ogreItem->setVisibilityFlags(geometryFile->getVisibilityFlag());
+						
+					}
+				}
+				break;
 
 				}
 			}
@@ -439,8 +498,9 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
 					{
 						ape::GeometryPlaneParameters parameters = primitive->getParameters();
+						// procedural not yet implemented
 						//Procedural::PlaneGenerator().setNumSegX(parameters.numSeg.x).setNumSegY(parameters.numSeg.y).setSizeX(parameters.size.x).setSizeY(parameters.size.y)
-						//	.setUTile(parameters.tile.x).setVTile(parameters.tile.y).realizeMesh(meshFileName.str());
+							//.setUTile(parameters.tile.x).setVTile(parameters.tile.y).realizeMesh(meshFileName.str());
 					}
 					Ogre::Item* planeItem = mpSceneMgr->createItem(geometryName,Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,Ogre::SCENE_DYNAMIC);
 					mItemList[geometryName] = planeItem;
@@ -450,6 +510,1145 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				}
 			}
 		}
+		else if (event.group == ape::Event::Group::GEOMETRY_BOX)
+		{
+			if (auto primitive = std::static_pointer_cast<ape::IBoxGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_BOX_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_BOX_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto ParentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = ParentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_BOX_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_BOX_MATERIAL:
+				{
+					if (auto ogreItem = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreItem->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_BOX_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometryBoxParameters parameters = primitive->getParameters();
+						// procedural not yet implemented
+						//Procedural::BoxGenerator().setSizeX(parameters.dimensions.x).setSizeY(parameters.dimensions.x).setSizeZ(parameters.dimensions.x)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* boxItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = boxItem;
+				}
+				break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::GEOMETRY_SPHERE)
+		{
+			if (auto primitive = std::static_pointer_cast<ape::ISphereGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_SPHERE_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_SPHERE_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_SPHERE_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_SPHERE_MATERIAL:
+				{
+					if (auto ogreItem = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreItem->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_SPHERE_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometrySphereParameters parameters = primitive->getParameters();
+						// procedural not yet implemented
+						//Procedural::SphereGenerator().setRadius(parameters.radius)
+						//	.setUTile(parameters.tile.x).setVTile(parameters.tile.y)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* sphereItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = sphereItem;
+
+				}
+				break;
+				}
+			}
+		}
+
+		else if (event.group == ape::Event::Group::GEOMETRY_CYLINDER)
+			{
+			if (auto primitive = std::static_pointer_cast<ape::ICylinderGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_CYLINDER_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_CYLINDER_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_CYLINDER_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_CYLINDER_MATERIAL:
+				{
+					if (auto ogreItem = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreItem->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_CYLINDER_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometryCylinderParameters parameters = primitive->getParameters();
+						//not implemented
+						//Procedural::CylinderGenerator().setHeight(parameters.height)
+						//	.setRadius(parameters.radius)
+						//	.setUTile(parameters.tile)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* cylinderItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = cylinderItem;
+
+				}
+				break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::GEOMETRY_TORUS)
+		{
+			if (auto primitive = std::static_pointer_cast<ape::ITorusGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_TORUS_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_TORUS_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TORUS_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_TORUS_MATERIAL:
+				{
+					if (auto ogreEntity = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreEntity->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TORUS_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometryTorusParameters parameters = primitive->getParameters();
+						//not implemted
+						//Procedural::TorusGenerator().setRadius(parameters.radius)
+						//	.setSectionRadius(parameters.sectionRadius)
+						//	.setUTile(parameters.tile.x).setVTile(parameters.tile.y)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* torusItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = torusItem;
+
+				}
+				break;
+				}
+			}
+		}
+		/*else if (event.group == ape::Event::Group::GEOMETRY_CONE)
+		{
+			if (auto primitive = std::static_pointer_cast<ape::IConeGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_CONE_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_CONE_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_CONE_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_CONE_MATERIAL:
+				{
+					if (auto ogreEntity = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreEntity->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_CONE_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometryConeParameters parameters = primitive->getParameters();
+						//not implemented
+						//Procedural::ConeGenerator().setRadius(parameters.radius)
+						//	.setHeight(parameters.height)
+						//	//.setNumSegBase(parameters.numSeg.x).setNumSegHeight(parameters.numSeg.y)
+						//	//.setUTile(parameters.tile)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* coneItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = coneItem;
+
+				}
+				break;
+				}
+			}
+		}*/
+		else if (event.group == ape::Event::Group::GEOMETRY_TUBE)
+		{
+			if (auto primitive = std::static_pointer_cast<ape::ITubeGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = primitive->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = primitive->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_TUBE_CREATE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_TUBE_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TUBE_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_TUBE_MATERIAL:
+				{
+					if (auto ogreEntity = mItemList[geometryName])
+					{
+						if (auto material = primitive->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreEntity->setMaterial(ogreMaterial);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TUBE_PARAMETERS:
+				{
+					std::stringstream meshFileName;
+					meshFileName << geometryName << ".mesh";
+					if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					{
+						ape::GeometryTubeParameters parameters = primitive->getParameters();
+						//not implemented
+						//Procedural::TubeGenerator().setHeight(parameters.height)
+						//	.setUTile(parameters.tile)
+						//	.realizeMesh(meshFileName.str());
+					}
+					Ogre::Item* tubeItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					mItemList[geometryName] = tubeItem;
+
+				}
+				break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::GEOMETRY_INDEXEDFACESET)
+		{
+			if (auto manual = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				ape::GeometryIndexedFaceSetParameters parameters = manual->getParameters();
+				std::string geometryName = manual->getName();
+				if (parameters.groupName.size())
+					geometryName = parameters.groupName;
+				std::string parentNodeName = "";
+				if (auto parentNode = manual->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_CREATE:
+				{
+
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_PARENTNODE:
+				{
+					if (mManualObjectList[geometryName])
+					{
+						if (auto ogreManual = mManualObjectList[geometryName])
+						{
+							auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+							if (auto ogreParentNode = parentList[0])
+							{
+								ogreParentNode->attachObject(ogreManual);
+							}
+						}
+					}
+					else if (mItemList[geometryName])
+					{
+						if (auto ogreEntity = mItemList[geometryName])
+						{
+							auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+							if (auto ogreParentNode = parentList[0])
+								ogreParentNode->attachObject(ogreEntity);					
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_MATERIAL:
+				{
+					if (auto ogreItem = mItemList[geometryName])
+					{
+						if (auto material = manual->getMaterial().lock())
+						{
+							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							ogreItem->setMaterial(ogreMaterial);
+						}	
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_PARAMETERS:
+				{
+					//Convert when command is fired somehow, for example GeometryRef
+					//std::stringstream meshFileName;
+					//meshFileName << geometryName << ".mesh";
+					//if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
+					//{
+					if (!mManualObjectList[geometryName])
+					{
+						auto ogreManual = mManualObjectList[geometryName];
+						ogreManual->setStatic(false);
+					}
+					if (mManualObjectList[geometryName])
+					{
+						if (auto ogreManual = mManualObjectList[geometryName])
+						{
+							std::vector<Ogre::Vector3> normals = std::vector<Ogre::Vector3>();
+							if (parameters.generateNormals)
+							{
+								/*for (int i = 0; i < parameters.coordinates.size(); i = i + 9)
+								{
+									Ogre::Vector3 coordinate0(parameters.coordinates[i], parameters.coordinates[i + 1], parameters.coordinates[i + 2]);
+									Ogre::Vector3 coordinate1(parameters.coordinates[i + 3], parameters.coordinates[i + 4], parameters.coordinates[i + 5]);
+									Ogre::Vector3 coordinate2(parameters.coordinates[i + 6], parameters.coordinates[i + 7], parameters.coordinates[i + 8]);
+									Ogre::Vector3 v1;
+									v1.x = coordinate2.x - coordinate0.x;
+									v1.y = coordinate2.y - coordinate0.y;
+									v1.z = coordinate2.z - coordinate0.z;
+									Ogre::Vector3 v2;
+									v2.x = coordinate1.x - coordinate0.x;
+									v2.y = coordinate1.y - coordinate0.y;
+									v2.z = coordinate1.z - coordinate0.z;
+									Ogre::Vector3 coordinateNormal((v1).crossProduct(v2));
+									normals.push_back(coordinateNormal);
+								}*/
+								normals.resize(parameters.coordinates.size() / 3);
+								for (int normalIndex = 0; normalIndex < normals.size(); normalIndex++)
+									normals[normalIndex] = Ogre::Vector3::ZERO;
+								int indexIndex = 0;
+								while (indexIndex < parameters.indices.size())
+								{
+									int indexCount = 0;
+									while (indexIndex + indexCount < parameters.indices.size() && parameters.indices[indexIndex + indexCount] != -1)
+										indexCount++;
+									if (indexCount == 4)
+									{
+										int coordinate0Index = parameters.indices[indexIndex] * 3;
+										Ogre::Vector3 coordinate0(parameters.coordinates[coordinate0Index], parameters.coordinates[coordinate0Index + 1], parameters.coordinates[coordinate0Index + 2]);
+
+										int coordinate1Index = parameters.indices[(indexIndex + 1)] * 3;
+										Ogre::Vector3 coordinate1(parameters.coordinates[coordinate1Index], parameters.coordinates[coordinate1Index + 1], parameters.coordinates[coordinate1Index + 2]);
+
+										int coordinate2Index = parameters.indices[(indexIndex + 2)] * 3;
+										Ogre::Vector3 coordinate2(parameters.coordinates[coordinate2Index], parameters.coordinates[coordinate2Index + 1], parameters.coordinates[coordinate2Index + 2]);
+
+										int coordinate3Index = parameters.indices[(indexIndex + 3)] * 3;
+										Ogre::Vector3 coordinate3(parameters.coordinates[coordinate3Index], parameters.coordinates[coordinate3Index + 1], parameters.coordinates[coordinate3Index + 2]);
+
+										Ogre::Vector3 v1;
+										v1.x = coordinate2.x - coordinate0.x;
+										v1.y = coordinate2.y - coordinate0.y;
+										v1.z = coordinate2.z - coordinate0.z;
+										Ogre::Vector3 v2;
+										v2.x = coordinate1.x - coordinate0.x;
+										v2.y = coordinate1.y - coordinate0.y;
+										v2.z = coordinate1.z - coordinate0.z;
+										Ogre::Vector3 coordinateNormal((v2).crossProduct(v1));
+
+										//TODO_apeOgreRenderPlugin maybe create new vertices because of trinagle list, instead of not accumulating the normals?
+										normals[parameters.indices[indexIndex]] += coordinateNormal;
+										normals[parameters.indices[indexIndex + 1]] += coordinateNormal;
+										normals[parameters.indices[indexIndex + 2]] += coordinateNormal;
+										normals[parameters.indices[indexIndex + 3]] += coordinateNormal;
+
+										indexIndex = indexIndex + 5;
+									}
+									else if (indexCount == 3)
+									{
+										int coordinate0Index = parameters.indices[indexIndex] * 3;
+										Ogre::Vector3 coordinate0(parameters.coordinates[coordinate0Index], parameters.coordinates[coordinate0Index + 1], parameters.coordinates[coordinate0Index + 2]);
+
+										int coordinate1Index = parameters.indices[(indexIndex + 1)] * 3;
+										Ogre::Vector3 coordinate1(parameters.coordinates[coordinate1Index], parameters.coordinates[coordinate1Index + 1], parameters.coordinates[coordinate1Index + 2]);
+
+										int coordinate2Index = parameters.indices[(indexIndex + 2)] * 3;
+										Ogre::Vector3 coordinate2(parameters.coordinates[coordinate2Index], parameters.coordinates[coordinate2Index + 1], parameters.coordinates[coordinate2Index + 2]);
+
+										Ogre::Vector3 v1;
+										v1.x = coordinate2.x - coordinate0.x;
+										v1.y = coordinate2.y - coordinate0.y;
+										v1.z = coordinate2.z - coordinate0.z;
+										Ogre::Vector3 v2;
+										v2.x = coordinate1.x - coordinate0.x;
+										v2.y = coordinate1.y - coordinate0.y;
+										v2.z = coordinate1.z - coordinate0.z;
+										Ogre::Vector3 coordinateNormal((v2).crossProduct(v1));
+
+										//TODO_apeOgreRenderPlugin  maybe create new vertices because of trinagle list, instead of not accumulating the normals?
+										normals[parameters.indices[indexIndex]] += coordinateNormal;
+										normals[parameters.indices[indexIndex + 1]] += coordinateNormal;
+										normals[parameters.indices[indexIndex + 2]] += coordinateNormal;
+
+										indexIndex = indexIndex + 4;
+									}
+									else
+									{
+										//TODO_apeOgreRenderPlugin 
+										indexIndex = indexIndex + indexCount + 1;
+									}
+								}
+							}
+							Ogre::MaterialPtr ogreMaterial = Ogre::MaterialPtr();
+							if (auto material = parameters.material.lock())
+							{
+								ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+								// Ogre v1
+								//ogreManual->begin(material->getName(), Ogre::RenderOperation::OperationType::OT_TRIANGLE_LIST);
+							}
+							else
+							{
+								//Ogre v1
+								//ogreManual->begin("FlatVertexColorLighting", Ogre::RenderOperation::OperationType::OT_TRIANGLE_LIST);
+							}
+							for (int i = 0; i < parameters.coordinates.size(); i = i + 3)
+							{
+								ogreManual->position(parameters.coordinates[i], parameters.coordinates[i + 1], parameters.coordinates[i + 2]);
+								if (parameters.generateNormals)
+								{
+									normals[i / 3].normalise();
+									ogreManual->normal(normals[i / 3]);
+								}
+								else if (parameters.normals.size() > i && parameters.normals.size() > 0)
+								{
+									ogreManual->normal(Ogre::Vector3(parameters.normals[i], parameters.normals[i + 1], parameters.normals[i + 2]));
+								}
+								if (parameters.textureCoordinates.size() > 0)
+								{
+									int textCoordIndex = (i / 3) * 2;
+									ogreManual->textureCoord(parameters.textureCoordinates[textCoordIndex], parameters.textureCoordinates[textCoordIndex + 1]);
+								}
+								if (parameters.colors.size() > 0)
+								{
+									int colorIndex = (i / 3) * 4;
+									Ogre::ColourValue color(parameters.colors[colorIndex], parameters.colors[colorIndex + 1], parameters.colors[colorIndex + 2], parameters.colors[colorIndex + 3]);
+									ogreManual->colour(color);
+								}
+							}
+							int indexIndex = 0;
+							while (indexIndex < parameters.indices.size())
+							{
+								int indexCount = 0;
+								while (indexIndex + indexCount < parameters.indices.size() && parameters.indices[indexIndex + indexCount] != -1)
+									indexCount++;
+
+								if (indexCount == 4)
+								{
+									ogreManual->quad(parameters.indices[indexIndex], parameters.indices[indexIndex + 1], parameters.indices[indexIndex + 2], parameters.indices[indexIndex + 3]);
+									indexIndex = indexIndex + 5;
+								}
+								else if (indexCount == 3)
+								{
+									ogreManual->triangle(parameters.indices[indexIndex], parameters.indices[indexIndex + 1], parameters.indices[indexIndex + 2]);
+									indexIndex = indexIndex + 4;
+								}
+								else
+								{
+									for (int i = 0; i < indexCount; i++)
+										ogreManual->index(parameters.indices[indexIndex + i]);
+
+									indexIndex = indexIndex + indexCount + 1;
+								}
+							}
+							ogreManual->end();
+						}
+					}
+				}
+				break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::GEOMETRY_INDEXEDLINESET)
+		{
+			if (auto manual = std::static_pointer_cast<ape::IIndexedLineSetGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = manual->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = manual->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_INDEXEDLINESET_CREATE:
+				{
+					Ogre::ManualObject* manObj = mpSceneMgr->createManualObject();
+					manObj->setName(geometryName);
+					mManualObjectList[geometryName] = manObj;
+				}
+					break;
+				case ape::Event::Type::GEOMETRY_INDEXEDLINESET_PARENTNODE:
+				{
+					if (auto ogreGeometry = mItemList[geometryName])
+					{
+						auto parentList = mpSceneMgr->findSceneNodes(geometryName);
+						if (auto ogreParentNode =parentList[0])
+							ogreParentNode->attachObject(ogreGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_INDEXEDLINESET_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_INDEXEDLINESET_PARAMETERS:
+				{
+					ape::GeometryIndexedLineSetParameters parameters = manual->getParameters();
+					if (auto ogreManual = mManualObjectList[geometryName])
+					{
+						// Ogre v1
+						//ogreManual->begin("FlatVertexColorNoLighting", Ogre::RenderOperation::OperationType::OT_LINE_LIST);
+						for (int coordinateIndex = 0; coordinateIndex < parameters.coordinates.size(); coordinateIndex = coordinateIndex + 3)
+						{
+							ogreManual->position(parameters.coordinates[coordinateIndex], parameters.coordinates[coordinateIndex + 1], parameters.coordinates[coordinateIndex + 2]);
+							ogreManual->colour(ape::ConversionToOgre21(parameters.color));
+						}
+						int indexIndex = 0;
+						while (indexIndex < parameters.indices.size())
+						{
+							while (indexIndex < parameters.indices.size() && parameters.indices[indexIndex] != -1)
+							{
+								ogreManual->index(parameters.indices[indexIndex]);
+								indexIndex++;
+							}
+							indexIndex++;
+						}
+						ogreManual->end();
+						Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+						mpSceneMgr->createEntity(geometryName, geometryName);
+						mpSceneMgr->destroyManualObject(mManualObjectList[geometryName]);
+						mManualObjectList.erase(geometryName);
+					}
+
+				}
+				break;
+				}
+			}
+		}
+		/*else if (event.group == ape::Event::Group::GEOMETRY_TEXT)
+		{
+			if (auto geometryText = std::static_pointer_cast<ape::ITextGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string geometryName = geometryText->getName();
+				std::string parentNodeName = "";
+				if (auto parentNode = geometryText->getParentNode().lock())
+					parentNodeName = parentNode->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_TEXT_CREATE:
+				{
+					if (auto ogreText = (ape::OgreMovableText*)mpOgreSceneManager->createMovableObject(geometryName, "MovableText"))
+					{
+						ogreText->setTextAlignment(ape::OgreMovableText::H_CENTER, ape::OgreMovableText::V_ABOVE);
+						ogreText->showOnTop(false);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TEXT_SHOWONTOP:
+				{
+					if (auto ogreText = (ape::OgreMovableText*)mpOgreSceneManager->getMovableObject(geometryName, "MovableText"))
+					{
+						if (auto textGeometry = std::static_pointer_cast<ape::ITextGeometry>(mpSceneManager->getEntity(geometryName).lock()))
+							ogreText->showOnTop(textGeometry->isShownOnTop());
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TEXT_PARENTNODE:
+				{
+					if (auto ogreTextGeometry = (ape::OgreMovableText*)mpOgreSceneManager->getMovableObject(geometryName, "MovableText"))
+					{
+						if (auto ogreParentNode = mpOgreSceneManager->getSceneNode(parentNodeName))
+							ogreParentNode->attachObject(ogreTextGeometry);
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_TEXT_DELETE:
+					;
+					break;
+				case ape::Event::Type::GEOMETRY_TEXT_CAPTION:
+				{
+					if (auto ogreText = (ape::OgreMovableText*)mpOgreSceneManager->getMovableObject(geometryName, "MovableText"))
+					{
+						if (auto textGeometry = std::static_pointer_cast<ape::ITextGeometry>(mpSceneManager->getEntity(geometryName).lock()))
+							ogreText->setCaption(textGeometry->getCaption());
+					}
+				}
+				break;
+				}
+			}
+		}*/
+		else if (event.group == ape::Event::Group::MATERIAL_MANUAL)
+		{
+			if (auto materialManual = std::static_pointer_cast<ape::IManualMaterial>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string materialName = materialManual->getName();
+				auto result = Ogre::MaterialManager::getSingleton().createOrRetrieve(materialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				Ogre::MaterialPtr ogreMaterial = result.first.staticCast<Ogre::Material>();
+				switch (event.type)
+				{
+				case ape::Event::Type::MATERIAL_MANUAL_CREATE:
+					;
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_DELETE:
+					;
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_DIFFUSE:
+					ogreMaterial->setDiffuse(ConversionToOgre21(materialManual->getDiffuseColor()));
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_SPECULAR:
+					ogreMaterial->setSpecular(ConversionToOgre21(materialManual->getSpecularColor()));
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_AMBIENT:
+					ogreMaterial->setAmbient(ConversionToOgre21(materialManual->getAmbientColor()));
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_EMISSIVE:
+					ogreMaterial->setSelfIllumination(ConversionToOgre21(materialManual->getEmissiveColor()));
+					break;
+				case ape::Event::Type::MATERIAL_MANUAL_PASS:
+				{
+					if (auto pass = materialManual->getPass().lock())
+					{
+						Ogre::MaterialManager::getSingleton().remove(materialName);
+						auto ogrePassMaterial = Ogre::MaterialManager::getSingleton().getByName(pass->getName());
+						if (!ogrePassMaterial.isNull())
+							ogrePassMaterial->clone(materialName);
+					}
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_TEXTURE:
+				{
+					if (auto texture = materialManual->getPassTexture().lock())
+					{
+						auto ogreTexture = Ogre::TextureManager::getSingleton().getByName(texture->getName());
+						if (!ogreTexture.isNull() && !ogreMaterial.isNull())
+						{
+							if (!ogreMaterial->getTechnique(0)->getPass(0)->getNumTextureUnitStates())
+								ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState();
+							ogreMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture(ogreTexture);
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_CULLINGMODE:
+				{
+					// Ogre v1
+					//ogreMaterial->setCullingMode(ape::ConversionToOgre21(materialManual->getCullingMode()));
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_DEPTHBIAS:
+				{
+					// Ogre c1
+					//ogreMaterial->setDepthBias(materialManual->getDepthBias().x, materialManual->getDepthBias().x);
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_LIGHTING:
+				{
+					//ogre v1
+					/*ogreMaterial->setLightingEnabled(materialManual->getLightingEnabled());
+					if (mpShaderGenerator)
+						mpShaderGenerator->removeAllShaderBasedTechniques(ogreMaterial->getName());
+					mpShaderGeneratorResolver->appendIgnoreList(ogreMaterial->getName());*/
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_SCENEBLENDING:
+				{
+					//ogre v1
+					/*ogreMaterial->setCullingMode(ape::ConversionToOgre(materialManual->getCullingMode()));
+					ogreMaterial->setSceneBlending(ape::ConversionToOgre(materialManual->getSceneBlendingType()));
+					if (materialManual->getSceneBlendingType() == ape::Pass::SceneBlendingType::TRANSPARENT_ALPHA)
+						ogreMaterial->setDepthWriteEnabled(false);*/
+				}
+				break;
+				case ape::Event::Type::MATERIAL_MANUAL_OVERLAY:
+				{
+					//Ogre v1
+					/*auto overlay = Ogre::OverlayManager::getSingleton().getByName(materialName);
+					if (materialManual->isShowOnOverlay())
+					{
+						if (!overlay)
+						{
+							auto overlayPanelElement = static_cast<Ogre::PanelOverlayElement*>(Ogre::OverlayManager::getSingleton().createOverlayElement("Panel", materialName));
+							overlayPanelElement->setMetricsMode(Ogre::GMM_RELATIVE);
+							overlayPanelElement->setMaterialName(materialName);
+							overlayPanelElement->setDimensions(1, 1);
+							overlayPanelElement->setPosition(0, 0);
+							overlay = Ogre::OverlayManager::getSingleton().create(materialName);
+							overlay->add2D(overlayPanelElement);
+							overlay->setZOrder(materialManual->getZOrder());
+						}
+						overlay->show();
+					}
+					else if (overlay)
+						overlay->hide();*/
+				}
+				break;
+				}
+			}
+		}
+		/*else if (event.group == ape::Event::Group::PASS_PBS)
+		{
+			if (auto passPbs = std::static_pointer_cast<ape::IPbsPass>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string passPbsName = passPbs->getName();
+				auto result = Ogre::MaterialManager::getSingleton().createOrRetrieve(passPbsName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				Ogre::MaterialPtr ogrePbsPassMaterial = result.first.staticCast<Ogre::Material>();
+				if (!ogrePbsPassMaterial.isNull())
+				{
+					switch (event.type)
+					{
+					case ape::Event::Type::MATERIAL_PBS_CREATE:
+					{
+						ogrePbsPassMaterial->createTechnique()->createPass();
+						Ogre::PbsMaterial* ogrePbsMaterial = new Ogre::PbsMaterial();
+						mPbsMaterials[passPbsName] = ogrePbsMaterial;
+					}
+					break;
+					case ape::Event::Type::MATERIAL_PBS_AMBIENT:
+						ogrePbsPassMaterial->setAmbient(ConversionToOgre21(passPbs->getAmbientColor()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_DIFFUSE:
+						ogrePbsPassMaterial->setDiffuse(ConversionToOgre21(passPbs->getDiffuseColor()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_EMISSIVE:
+						ogrePbsPassMaterial->setSelfIllumination(ConversionToOgre21(passPbs->getEmissiveColor()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_SPECULAR:
+						ogrePbsPassMaterial->setSpecular(ConversionToOgre21(passPbs->getSpecularColor()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_SHININESS:
+						ogrePbsPassMaterial->setShininess(passPbs->getShininess());
+						break;
+					case ape::Event::Type::MATERIAL_PBS_ALBEDO:
+						mPbsMaterials[passPbsName]->setAlbedo(ConversionToOgre21(passPbs->getAlbedo()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_F0:
+						mPbsMaterials[passPbsName]->setF0(ConversionToOgre21(passPbs->getF0()));
+						break;
+					case ape::Event::Type::MATERIAL_PBS_ROUGHNESS:
+						mPbsMaterials[passPbsName]->setRoughness(passPbs->getRoughness());
+						break;
+					case ape::Event::Type::MATERIAL_PBS_LIGHTROUGHNESSOFFSET:
+						mPbsMaterials[passPbsName]->setLightRoughnessOffset(passPbs->getLightRoughnessOffset());
+						break;
+					case ape::Event::Type::MATERIAL_PBS_DELETE:
+						;
+						break;
+					}
+				}
+			}
+		}*/
+
+		else if (event.group == ape::Event::Group::PASS_MANUAL)
+		{
+			if (auto passManual = std::static_pointer_cast<ape::IManualPass>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string passManualName = passManual->getName();
+				auto result = Ogre::MaterialManager::getSingleton().createOrRetrieve(passManualName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				Ogre::MaterialPtr ogreManualPassMaterial = result.first.staticCast<Ogre::Material>();
+				if (!ogreManualPassMaterial.isNull())
+				{
+					switch (event.type)
+					{
+					case ape::Event::Type::PASS_MANUAL_CREATE:
+						ogreManualPassMaterial->createTechnique()->createPass();
+						break;
+					case ape::Event::Type::PASS_MANUAL_AMBIENT:
+						ogreManualPassMaterial->setAmbient(ConversionToOgre21(passManual->getAmbientColor()));
+						break;
+					case ape::Event::Type::PASS_MANUAL_DIFFUSE:
+						ogreManualPassMaterial->setDiffuse(ConversionToOgre21(passManual->getDiffuseColor()));
+						break;
+					case ape::Event::Type::PASS_MANUAL_EMISSIVE:
+						ogreManualPassMaterial->setSelfIllumination(ConversionToOgre21(passManual->getEmissiveColor()));
+						break;
+					case ape::Event::Type::PASS_MANUAL_SPECULAR:
+						ogreManualPassMaterial->setSpecular(ConversionToOgre21(passManual->getSpecularColor()));
+						break;
+					case ape::Event::Type::PASS_MANUAL_SHININESS:
+						ogreManualPassMaterial->setShininess(passManual->getShininess());
+						break;
+					case ape::Event::Type::PASS_MANUAL_SCENEBLENDING:
+					{
+						//ogre v1
+						/*ogreManualPassMaterial->setSceneBlending(ConversionToOgre21(passManual->getSceneBlendingType()));
+						if (passManual->getSceneBlendingType() == ape::Pass::SceneBlendingType::TRANSPARENT_ALPHA)
+							ogreManualPassMaterial->setDepthWriteEnabled(false);*/
+					}
+					break;
+					case ape::Event::Type::PASS_MANUAL_TEXTURE:
+					{
+						if (auto texture = passManual->getTexture().lock())
+						{
+							auto ogreTexture = Ogre::TextureManager::getSingleton().getByName(texture->getName());
+							if (!ogreTexture.isNull())
+							{
+								if (!ogreManualPassMaterial->getTechnique(0)->getPass(0)->getNumTextureUnitStates())
+									ogreManualPassMaterial->getTechnique(0)->getPass(0)->createTextureUnitState();
+								ogreManualPassMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture(ogreTexture);
+							}
+						}
+					}
+					break;
+					case ape::Event::Type::PASS_MANUAL_GPUPARAMETERS:
+					{
+						Ogre::GpuProgramParametersSharedPtr ogreGpuParameters = ogreManualPassMaterial->getTechnique(0)->getPass(0)->getVertexProgramParameters();
+						if (!ogreGpuParameters.isNull())
+						{
+							for (auto passGpuParameter : passManual->getPassGpuParameters())
+								ogreGpuParameters->setNamedConstant(passGpuParameter.name, ConversionToOgre21(passGpuParameter.value));
+						}
+					}
+					break;
+					case ape::Event::Type::PASS_MANUAL_DELETE:
+						;
+						break;
+					}
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::TEXTURE_FILE)
+		{
+			if (auto textureManual = std::static_pointer_cast<ape::IManualTexture>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string textureManualName = textureManual->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::TEXTURE_FILE_CREATE:
+					break;
+				case ape::Event::Type::TEXTURE_FILE_FILENAME:
+				{
+					auto ogreTexture = Ogre::TextureManager::getSingleton().createOrRetrieve(textureManualName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				}
+				break;
+				case ape::Event::Type::TEXTURE_FILE_DELETE:
+					;
+					break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::TEXTURE_MANUAL)
+		{
+			if (auto textureManual = std::static_pointer_cast<ape::IManualTexture>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string textureManualName = textureManual->getName();
+				switch (event.type)
+				{
+				case ape::Event::Type::TEXTURE_MANUAL_CREATE:
+					break;
+				case ape::Event::Type::TEXTURE_MANUAL_PARAMETERS:
+				{
+					ape::ManualTextureParameters parameters = textureManual->getParameters();
+					auto ogreTexture = Ogre::TextureManager::getSingleton().createManual(textureManualName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+						Ogre::TEX_TYPE_2D, Ogre::uint(parameters.width), Ogre::uint(parameters.height), 0, ape::ConversionToOgre21(parameters.pixelFormat),
+						ape::ConversionToOgre21(parameters.usage), nullptr, true, mOgreRenderPluginConfig.ogreRenderWindowConfigList[0].fsaa, mOgreRenderPluginConfig.ogreRenderWindowConfigList[0].fsaaHint);
+					if (mOgreRenderPluginConfig.renderSystem == "OGL")
+					{
+						/*GLuint glid;
+						ogreTexture->getCustomAttribute("GLID", &glid);
+						textureManual->setGraphicsApiID((void*)glid);*/
+						bool outIsFsaa;
+						textureManual->setGraphicsApiID((void*)static_cast<Ogre::GL3PlusTexture*>(Ogre::TextureManager::getSingleton().getByName(textureManualName).getPointer())->getGLID(outIsFsaa));
+					}
+					if (mOgreRenderPluginConfig.renderSystem == "DX11")
+					{
+						textureManual->setGraphicsApiID((void*)static_cast<Ogre::D3D11Texture*>(Ogre::TextureManager::getSingleton().getByName(textureManualName).getPointer())->GetTex2D());
+					}
+				}
+				break;
+				case ape::Event::Type::TEXTURE_MANUAL_BUFFER:
+				{
+					auto ogreTexture = Ogre::TextureManager::getSingleton().getByName(textureManualName);
+					if (!ogreTexture.isNull())
+					{
+						// Ogre v1
+						////APE_LOG_DEBUG("TEXTURE_MANUAL_BUFFER write begin");
+						//Ogre::HardwarePixelBufferSharedPtr texBuf = ogreTexture->getBuffer();
+						//texBuf->lock(Ogre::HardwareBuffer::HBL_DISCARD);
+						//memcpy(texBuf->getCurrentLock().data, textureManual->getBuffer(), textureManual->getParameters().width * textureManual->getParameters().height * 4);
+						//texBuf->unlock();
+						///*static int s = 1;
+						//std::wostringstream oss;
+						//oss << std::setw(4) << std::setfill(L'0') << s++ << L".bmp";
+						//ape::SaveVoidBufferToImage(oss.str(), textureManual->getBuffer(), textureManual->getParameters().width, textureManual->getParameters().height);*/
+						////APE_LOG_DEBUG("TEXTURE_MANUAL_BUFFER write end");
+						
+					}
+				}
+				break;
+				case ape::Event::Type::TEXTURE_MANUAL_SOURCECAMERA:
+				{
+					auto ogreTexture = Ogre::TextureManager::getSingleton().getByName(textureManualName);
+					if (!ogreTexture.isNull())
+					{
+						if (auto camera = textureManual->getSourceCamera().lock())
+						{
+							if (auto ogreCamera = mpSceneMgr->findCamera(camera->getName()))
+							{
+								if (auto ogreRenderTexture = ogreTexture->getBuffer()->getRenderTarget())
+								{
+
+									//ogreRenderTexture->setAutoUpdated(true);
+									if (auto ogreViewport = ogreRenderTexture->addViewport())
+									{
+										//ogreViewport->setClearEveryFrame(true);
+										//ogreViewport->setAutoUpdated(true);
+										if (mOgreRenderPluginConfig.shading == "perPixel" || mOgreRenderPluginConfig.shading == "")
+										{
+											// Ogre v1
+											//ogreViewport->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+										}
+										mRttList.push_back(textureManual);
+									}
+								}
+							}
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::TEXTURE_MANUAL_DELETE:
+					;
+					break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::TEXTURE_UNIT)
+		{
+			if (auto textureUnit = std::static_pointer_cast<ape::IUnitTexture>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				std::string textureUnitName = textureUnit->getName();
+				ape::IUnitTexture::Parameters parameters = textureUnit->getParameters();
+				Ogre::MaterialPtr ogreMaterial;
+				if (auto material = parameters.material.lock())
+					ogreMaterial = Ogre::MaterialManager::getSingletonPtr()->getByName(material->getName());
+				switch (event.type)
+				{
+				case ape::Event::Type::TEXTURE_UNIT_CREATE:
+					break;
+				case ape::Event::Type::TEXTURE_UNIT_PARAMETERS:
+				{
+					if (!ogreMaterial.isNull())
+						ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState(parameters.fileName);
+				}
+				break;
+				case ape::Event::Type::TEXTURE_UNIT_SCROLL:
+				{
+					if (!ogreMaterial.isNull())
+					{
+						auto ogreTextureUnit = ogreMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+						if (ogreTextureUnit)
+							ogreTextureUnit->setTextureScroll(textureUnit->getTextureScroll().x, textureUnit->getTextureScroll().y);
+					}
+				}
+				break;
+				case ape::Event::Type::TEXTURE_UNIT_ADDRESSING:
+				{
+					//Ogre v1
+					/*if (!ogreMaterial.isNull())
+					{
+						auto ogreTextureUnit = ogreMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+						if (ogreTextureUnit)
+							ogreTextureUnit->setTextureAddressingMode(ape::ConversionToOgre21(textureUnit->getTextureAddressingMode()));
+					}*/
+				}
+				break;
+				case ape::Event::Type::TEXTURE_UNIT_FILTERING:
+				{
+					//Ogre v1
+					/*if (!ogreMaterial.isNull())
+					{
+						auto ogreTextureUnit = ogreMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+						if (ogreTextureUnit)
+							ogreTextureUnit->setTextureFiltering(ape::ConversionToOgre21(textureUnit->getTextureFiltering().minFilter), ape::ConversionToOgre21(textureUnit->getTextureFiltering().magFilter), ape::ConversionToOgre21(textureUnit->getTextureFiltering().mipFilter));
+					}
+					*/
+				}
+				break;
+				case ape::Event::Type::TEXTURE_MANUAL_DELETE:
+					;
+					break;
+				}
+			}
+		}
+		else if (event.group == ape::Event::Group::GEOMETRY_RAY)
+		{
+			if (auto geometryRay = std::static_pointer_cast<ape::IRayGeometry>(mpSceneManager->getEntity(event.subjectName).lock()))
+			{
+				switch (event.type)
+				{
+				case ape::Event::Type::GEOMETRY_RAY_CREATE:
+					break;
+				case ape::Event::Type::GEOMETRY_RAY_INTERSECTIONQUERY:
+				{
+					if (auto rayOverlayNode = geometryRay->getParentNode().lock())
+					{
+						if (auto raySpaceNode = rayOverlayNode->getParentNode().lock())
+						{
+							Ogre::Ray ray = mOgreCameras[0]->getCameraToViewportRay(rayOverlayNode->getPosition().x / mOgreRenderPluginConfig.ogreRenderWindowConfigList[0].width,
+								rayOverlayNode->getPosition().y / mOgreRenderPluginConfig.ogreRenderWindowConfigList[0].height); //TODO_apeOgreRenderPlugin check enabled window in ogreRenderWindowConfigList
+							Ogre::RaySceneQuery *raySceneQuery = mpSceneMgr->createRayQuery(ray);
+							if (raySceneQuery != NULL)
+							{
+								raySceneQuery->setSortByDistance(true);
+								raySceneQuery->execute();
+								Ogre::RaySceneQueryResult query_result = raySceneQuery->getLastResults();
+								std::vector<ape::EntityWeakPtr> intersections;
+								for (size_t i = 0, size = query_result.size(); i < size; ++i)
+								{
+									if (auto entiy = mpSceneManager->getEntity(query_result[i].movable->getName()).lock())
+									{
+										intersections.push_back(entiy);
+									}
+								}
+								geometryRay->setIntersections(intersections);
+							}
+						}
+					}
+				}
+				break;
+				case ape::Event::Type::GEOMETRY_RAY_DELETE:
+					;
+					break;
+				}
+			}
+		}
+		
 		else if (event.group == ape::Event::Group::CAMERA)
 		{
 			if (auto camera = std::static_pointer_cast<ape::ICamera>(mpSceneManager->getEntity(event.subjectName).lock()))
@@ -516,15 +1715,58 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 												//------------------
 
 
-
+												
 												Ogre::IdString workspaceName("MyOwnWorkspace");
 												Ogre::CompositorManager2* compositorManager = mpRoot->getCompositorManager2();
 												if (!compositorManager->hasWorkspaceDefinition(workspaceName))
 													compositorManager->createBasicWorkspaceDef("MyOwnWorkspace", Ogre::ColourValue(0.6f, 0.0f, 0.6f));
 
+												//compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
+												//	"MyOwnWorkspace", true);
 												//compositorManager->addWorkspaceDefinition("WorkSpace01");
-												compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera, workspaceName, true);
+												auto asd = compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
+													"TutorialSky_PostprocessWorkspace", true);
+												//asd->setEnabled(false);
 												//--------
+												
+												//--------
+
+												/*
+
+												static const Ogre::String SKYBOX_WORKSPACE = "SkyPostprocessWorkspace";
+												Ogre::CompositorManager2* compositorManager2 = mpRoot->getCompositorManager2();
+												if (!compositorManager2->hasWorkspaceDefinition(SKYBOX_WORKSPACE))
+													compositorManager2->createBasicWorkspaceDef(SKYBOX_WORKSPACE, Ogre::ColourValue(0.8f, 0.0f, 0.8f));
+												
+												Ogre::CompositorWorkspace* mWorkspaceRttSkyBox = compositorManager2->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera, SKYBOX_WORKSPACE, true);
+												mWorkspaceRttSkyBox->setEnabled(false);
+
+
+
+
+												static const Ogre::String SKYBOX_MATERIAL_NAME = "SkyPostprocess";
+
+
+												Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName(SKYBOX_MATERIAL_NAME);
+												if (materialPtr.isNull())
+													return;
+
+												Ogre::Material* material = materialPtr.getPointer();
+												Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+												tex->setCubicTextureName("Tantolunden.dds", true);
+												tex->setGamma(2.0);
+												material->compile();
+												mWorkspaceRttSkyBox->setEnabled(true);
+												
+
+
+												*/
+
+
+
+												//--------
+
+												
 											}
 										}
 									}
@@ -549,7 +1791,6 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									if (ogreCamera->getParentNode())
 										ogreCamera->detachFromParent();
 									ogreParentNode->attachObject(ogreCamera);
-									//ogreCamera->setPosition(10, 10, 10);
 								}
 							}
 						}
@@ -624,9 +1865,9 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					if (mpSceneMgr->findCamera(event.subjectName))
 					{
 						Ogre::Viewport* ogreViewport = mpSceneMgr->findCamera(event.subjectName)->getLastViewport();
+						//ogrev1
 						//if (ogreViewport)
-							/*ogreViewport->_setVisibilityMask(camera->getVisibilityMask,camera->getLi );
-							ogreViewport->setVisibilityMask(camera->getVisibilityMask());*/
+							//ogreViewport->setVisibilityMask(camera->getVisibilityMask());
 					}
 				}
 				break;
@@ -931,14 +2172,14 @@ void ape::Ogre21RenderPlugin::Init()
 
 	mpRoot->setRenderSystem(renderSystem);
 
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripst", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	/*Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/DebugPack.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/cubemap.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/cubemapsJS.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
@@ -950,7 +2191,8 @@ void ape::Ogre21RenderPlugin::Init()
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/SdkTrays.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/Sinbad.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/skybox.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);*/
-
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/Compositors", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/materials/TutorialSky_Postprocess", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	for (auto resourceLocation : mpCoreConfig->getNetworkConfig().resourceLocations)
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resourceLocation, "FileSystem");
 

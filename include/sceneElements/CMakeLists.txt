@@ -36,7 +36,7 @@ set (HEADERS
 	apeIManualPass.h
 	apeIManualTexture.h
 	apeINode.h
-	apeIPbsPass.h
+	apeIPbsMaterial.h
 	apeIPlaneGeometry.h
 	apeIPointCloud.h
 	apeIRayGeometry.h

@@ -125,10 +125,6 @@ public:
 		mPtr.lock()->setPass(manualPass.getManualPassSharedPtr());
 	}
 
-	void setPbsPass(PbsPassJsPtr pbsPass)
-	{
-		mPtr.lock()->setPass(pbsPass.getPbsPassSharedPtr());
-	}
 };
 
 using namespace ape;
@@ -163,7 +159,6 @@ NBIND_CLASS(ManualMaterialJsPtr)
 	method(getDiffuseColor);
 	method(getSpecularColor);
 	method(setManualPass);
-	method(setPbsPass);
 }
 
 #endif

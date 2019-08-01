@@ -75,7 +75,13 @@ SOFTWARE.*/
 
 #include <OgreCompositorManager2.h>
 
+#include <OgreStaticGeometry.h>
+#include <OgreMaterialSerializer.h>
 
+#include <OgreD3D11Texture.h>
+#include <OgreGL3PlusTexture.h>
+
+#include <OgreCompositorWorkspace.h>
 
 
 //ApertusVR includes
@@ -107,11 +113,12 @@ SOFTWARE.*/
 #include "managers/apeICoreConfig.h"
 #include "sceneelements/apeIFileGeometry.h"
 #include "sceneelements/apeIUnitTexture.h"
-#include "sceneelements/apeIPbsPass.h"
+#include "sceneelements/apeIPbsMaterial.h"
 #include "sceneelements/apeIManualPass.h"
 #include "sceneelements/apeIManualTexture.h"
 #include "sceneelements/apeISky.h"
 #include "sceneelements/apeIWater.h"
+
 
 //Own includes
 #include "apeOgre21RenderPluginConfigs.h"
@@ -159,6 +166,8 @@ namespace ape
 
 		std::map<std::string, Ogre::Item*> mItemList;
 
+		std::map<std::string, Ogre::ManualObject*> mManualObjectList;
+
 		std::vector<Ogre::Camera*> mOgreCameras;
 
 		std::map<std::string, Ogre::Light*> mLightList;
@@ -166,6 +175,8 @@ namespace ape
 		std::map<std::string, Ogre::RenderWindow*> mRenderWindows;
 
 		Ogre::HlmsManager* mpHlmsPbsManager;
+
+		Ogre::MaterialSerializer mMaterialSerializer;
 
 		ape::ISceneManager* mpSceneManager;
 
@@ -182,6 +193,8 @@ namespace ape
 		ape::UserInputMacro* mpUserInputMacro;
 
 		ape::UserInputMacro::ViewPose mUserInputMacroPose;
+
+		std::vector<ape::ManualTextureWeakPtr> mRttList;
 
 		int mCameraCountFromConfig;
 

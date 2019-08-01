@@ -112,11 +112,11 @@ namespace ape
 
 	typedef std::shared_ptr<Pass> PassSharedPtr;
 
-	class IPbsPass;
+	class IPbsMaterial;
 
-	typedef std::weak_ptr<IPbsPass> PbsPassWeakPtr;
+	typedef std::weak_ptr<IPbsMaterial> PbsPassWeakPtr;
 
-	typedef std::shared_ptr<IPbsPass> PbsPassSharedPtr;
+	typedef std::shared_ptr<IPbsMaterial> PbsPassSharedPtr;
 
 	class IManualPass;
 
