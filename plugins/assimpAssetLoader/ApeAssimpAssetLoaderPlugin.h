@@ -41,11 +41,13 @@ SOFTWARE.*/
 #include "sceneelements/apeIFileTexture.h"
 #include "sceneelements/apeIIndexedFaceSetGeometry.h"
 #include "sceneelements/apeIManualMaterial.h"
+#include "sceneelements/apeIPbsMaterial.h"
 #include "sceneelements/apeINode.h"
 #include "sceneelements/apeITextGeometry.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <assimp/pbrmaterial.h>
 
 #define THIS_PLUGINNAME "apeAssimpAssetLoaderPlugin"
 

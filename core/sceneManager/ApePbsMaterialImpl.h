@@ -38,31 +38,63 @@ namespace ape
 
 		~PbsMaterialImpl();
 		
-		/*void setAlbedo(ape::Color albedo) override;
+		/*void setAlbedo(ape::Color albedo) override;*/
 
 		void setRoughness(float roughness) override;
 
-		void setLightRoughnessOffset(float lightRoughnessOffset) override;
+		/*void setLightRoughnessOffset(float lightRoughnessOffset) override;
 
 		void setF0(ape::Color f0) override;
 
-		ape::Color getAlbedo() override;
+		ape::Color getAlbedo() override;*/
 
 		float getRoughness() override;
 
-		float getLightRoughnessOffset() override;
+		/*float getLightRoughnessOffset() override;
 
-		ape::Color getF0() override;
+		ape::Color getF0() override;*/
 
 		void setDiffuseColor(ape::Color diffuse) override;
 
+		ape::Color getDiffuseColor() override;
+
 		void setSpecularColor(ape::Color specular) override;
 
-		void setAmbientColor(ape::Color ambient) override;
+		/*void setAmbientColor(ape::Color ambient) override;*/
 
 		void setEmissiveColor(ape::Color emissive) override;
 
-		void setShininess(float shininess) override;*/
+		ape::Color getEmissiveColor() override;
+
+		/*void setShininess(float shininess) override;*/
+
+		virtual void setAlphaMode(std::string alphaMode)override;
+
+		virtual std::string getAlphaMode() override;
+
+		virtual void setAlphaCutoff(float alphaCutoff) override;
+
+		virtual float getAlphaCutoff() override;
+
+		void setMetalness(float Metalness) override;
+
+		float getMetalness() override;
+
+		void setBaseColor(float MetallicRoughness) override;
+
+		float getBaseColor() override;
+
+		void setMetallicRoughnessTexture(std::string path) override;
+
+		std::string getMetallicRoughnessTexture() override;
+
+		void setBaseColorTexture(std::string path) override;
+
+		std::string getBaseColorTexture() override;
+
+		void setNormalTexture(std::string path) override;
+
+		std::string getNormalTexture() override;
 
 		void WriteAllocationID(RakNet::Connection_RM3 *destinationConnection, RakNet::BitStream *allocationIdBitstream) const override;
 
@@ -81,7 +113,18 @@ namespace ape
 
 		float mLightRoughnessOffset;
 
+		float mAlphaCutoff;
+
 		ape::Color mF0;
+
+		std::string mAlphaMode;
+
+		std::string mMetallicRoughnessTexture;
+
+		std::string mBaseColorTexture;
+
+		std::string mNormalTexture;
+
 	};
 }
 

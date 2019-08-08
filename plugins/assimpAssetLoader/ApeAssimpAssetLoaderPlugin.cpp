@@ -131,6 +131,7 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 			assimpMesh->mName = meshUniqueName.str();
 			if (auto mesh = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->createEntity(meshUniqueName.str(), ape::Entity::GEOMETRY_INDEXEDFACESET).lock()))
 			{
+				
 				ape::GeometryCoordinates coordinates = ape::GeometryCoordinates();
 				for (int i = 0; i < assimpMesh->mNumVertices; i++)
 				{
@@ -150,6 +151,18 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 						indices.push_back(assimpFace.mIndices[i]);
 					indices.push_back(-1);
 				}
+				
+				/*for (int i = 0; i < assimpMesh->mNumFaces; i++)
+				{
+					aiFace assimpFace = assimpMesh->mFaces[i];
+					for (int i = 0; i < assimpFace.mNumIndices; i++)
+						indices.push_back(assimpFace.mIndices[i]);
+					indices.push_back(-1);
+				}*/
+
+
+
+
 				aiMaterial* asssimpMaterial = mAssimpScenes[assimpSceneID]->mMaterials[assimpMesh->mMaterialIndex];
 				aiString materialName;
 				asssimpMaterial->Get(AI_MATKEY_NAME, materialName);
@@ -162,6 +175,92 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 				modifiedMaterialName.erase(std::remove(modifiedMaterialName.begin(), modifiedMaterialName.end(), '<'), modifiedMaterialName.end());
 				modifiedMaterialName.erase(std::remove(modifiedMaterialName.begin(), modifiedMaterialName.end(), '>'), modifiedMaterialName.end());
 
+				auto material = std::static_pointer_cast<ape::IPbsMaterial>(mpSceneManager->getEntity(modifiedMaterialName).lock());
+				std::string diffuseTextureFileName = std::string();
+				if (!material)
+				{
+					material = std::static_pointer_cast<ape::IPbsMaterial>(mpSceneManager->createEntity(modifiedMaterialName, ape::Entity::MATERIAL_PBS).lock());
+					aiColor3D colorDiffuse(0.0f, 0.0f, 0.0f);
+					asssimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, colorDiffuse);
+					float opacity = 1.0f;
+					asssimpMaterial->Get(AI_MATKEY_OPACITY, opacity);
+					aiColor3D colorSpecular(0.0f, 0.0f, 0.0f);
+					asssimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, colorSpecular);
+					aiColor3D colorAmbient(0.0f, 0.0f, 0.0f);
+					asssimpMaterial->Get(AI_MATKEY_COLOR_AMBIENT, colorAmbient);
+					aiColor3D colorEmissive(0.0f, 0.0f, 0.0f);
+					asssimpMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, colorEmissive);
+					aiColor3D colorTransparent(0.0f, 0.0f, 0.0f);
+					asssimpMaterial->Get(AI_MATKEY_COLOR_TRANSPARENT, colorTransparent);
+					int sceneBlendingType = 0;
+					asssimpMaterial->Get(AI_MATKEY_BLEND_FUNC, sceneBlendingType);
+					float metalness = 0.0;
+					asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metalness);
+					float roughness = 0.0;
+					asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughness);	
+					float baseColor = 0.0;
+					//asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor);
+					
+					aiString fileBaseColor, fileMetallicRoughness;
+					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
+					//std::cout <<fileMetallicRoughness.C_Str() << std::endl;
+					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
+					aiString alphaMode;
+					asssimpMaterial->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode);
+					aiString normalTexture;
+					
+					
+
+					material->setBaseColorTexture(fileBaseColor.C_Str());
+					material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
+
+					material->setMetalness(metalness);
+					material->setRoughness(roughness);
+					//material->setBaseColor(baseColor);
+					material->setAlphaMode(alphaMode.C_Str());
+
+					
+
+
+					if (asssimpMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0)
+					{
+						aiString path;
+						asssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+						diffuseTextureFileName = path.data;
+					}
+					if (!colorDiffuse.IsBlack())
+						material->setDiffuseColor(ape::Color(colorDiffuse.r, colorDiffuse.g, colorDiffuse.b, opacity));
+					if (!colorSpecular.IsBlack())
+						material->setSpecularColor(ape::Color(colorSpecular.r, colorSpecular.g, colorSpecular.b, opacity));
+					//if (!colorAmbient.IsBlack())
+					//	material->setAmbientColor(ape::Color(colorAmbient.r, colorAmbient.g, colorAmbient.b));
+					if (!colorEmissive.IsBlack())
+						material->setEmissiveColor(ape::Color(colorEmissive.r, colorEmissive.g, colorEmissive.b));
+
+
+					if (sceneBlendingType == aiBlendMode_Additive)
+					{
+						//material->setSceneBlending(ape::Pass::SceneBlendingType::ADD);
+						////APE_LOG_DEBUG("blending ADD: " << opacity);
+					}
+					else if (sceneBlendingType == aiBlendMode_Default)
+					{
+						if (opacity < 0.99)
+						{
+							//material->setSceneBlending(ape::Pass::SceneBlendingType::TRANSPARENT_ALPHA);
+							////APE_LOG_DEBUG("blending TRANSPARENT_ALPHA: " << opacity);
+						}
+						else
+						{
+							//material->setSceneBlending(ape::Pass::SceneBlendingType::REPLACE);
+							////APE_LOG_DEBUG("blending REPLACE: " << opacity);
+						}
+					}
+					material->setBaseColor(baseColor);
+					//APE_LOG_DEBUG("createManualMaterial: " << material->getName());
+				}
+
+				/*
 				auto material = std::static_pointer_cast<ape::IManualMaterial>(mpSceneManager->getEntity(modifiedMaterialName).lock());
 				std::string diffuseTextureFileName = std::string();
 				if (!material)
@@ -216,7 +315,7 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 						}
 					}
 					//APE_LOG_DEBUG("createManualMaterial: " << material->getName());
-				}
+				}*/
 				ape::GeometryNormals normals = ape::GeometryNormals();
 				if (assimpMesh->HasNormals() && !mAssimpAssetConfigs[assimpSceneID].regenerateNormals)
 				{
@@ -226,6 +325,18 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 						normals.push_back(assimpNormal.x);
 						normals.push_back(assimpNormal.y);
 						normals.push_back(assimpNormal.z);
+					}
+					//APE_LOG_DEBUG("hasNormal: " << assimpMesh->mName.C_Str());
+				}
+				ape::GeometryTangents tangents = ape::GeometryTangents();
+				//if (assimpMesh->HasTangentsAndBitangents()) //assume that we have corretc tangents in file
+				{
+					for (int i = 0; i < assimpMesh->mNumVertices; i++)
+					{
+						aiVector3D assimpTangent = assimpMesh->mTangents[i];
+						tangents.push_back(assimpTangent.x);
+						tangents.push_back(assimpTangent.y);
+						tangents.push_back(assimpTangent.z);
 					}
 					//APE_LOG_DEBUG("hasNormal: " << assimpMesh->mName.C_Str());
 				}
@@ -262,18 +373,18 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 				std::string groupName = std::string();
 				if (mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 					groupName = mAssimpAssetConfigs[assimpSceneID].file;
-				mesh->setParameters(groupName, coordinates, indices, normals, mAssimpAssetConfigs[assimpSceneID].regenerateNormals, colors, textureCoordinates, material);
+				mesh->setParameters(groupName, coordinates, indices, normals, tangents, mAssimpAssetConfigs[assimpSceneID].regenerateNormals, colors, textureCoordinates, material);
 				if (textureCoordinates.size() && diffuseTextureFileName.length())
 				{
 					if (auto fileTexture = std::static_pointer_cast<ape::IFileTexture>(mpSceneManager->createEntity(diffuseTextureFileName, ape::Entity::Type::TEXTURE_FILE).lock()))
 					{
 						fileTexture->setFileName(diffuseTextureFileName);
-						material->setPassTexture(fileTexture);
+//						material->setPassTexture(fileTexture);
 					}
 				}
 				if (!mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 					mesh->setParentNode(node);
-				//APE_LOG_DEBUG("createIndexedFaceSetGeometry: " << mesh->getName());
+				APE_LOG_DEBUG("createIndexedFaceSetGeometry: " << mesh->getName());
 			}
 		}
 	}

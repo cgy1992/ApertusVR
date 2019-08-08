@@ -37,7 +37,7 @@ namespace ape
 
 		~IndexedFaceSetGeometryImpl();
 
-		void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) override;
+		void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) override;
 
 		ape::GeometryIndexedFaceSetParameters getParameters() override;
 
@@ -63,6 +63,8 @@ namespace ape
 		int mIndicesSize;
 
 		int mNormalsSize;
+
+		int mTangentsSize;
 
 		int mColorsSize;
 

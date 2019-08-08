@@ -60,7 +60,7 @@ void myApeMakeBox()
 					1, 5, 6, 2, -1,
 					2, 6, 7, 3, -1,
 					4, 0, 3, 7, -1 };
-				box->setParameters("", coordinates, indices, ape::GeometryNormals(), true, ape::GeometryColors(), ape::GeometryTextureCoordinates(), material);
+				box->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), true, ape::GeometryColors(), ape::GeometryTextureCoordinates(), material);
 				box->setParentNode(node);
 				std::cout << "myApeBox was created in myApeThread" << std::endl;
 			}

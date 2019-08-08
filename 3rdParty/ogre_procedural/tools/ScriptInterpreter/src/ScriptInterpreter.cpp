@@ -27,6 +27,7 @@ THE SOFTWARE.
 */
 #include "ScriptInterpreter.h"
 #include "Procedural.h"
+#include <iostream>
 
 using namespace Ogre;
 using namespace std;
@@ -174,9 +175,9 @@ void ScriptInterpreter::reloadScript()
 	else
 		mTextMessage->setCaption("KO (" + message + ")");
 	if (success)
-		mCamera->getViewport()->setBackgroundColour(ColourValue(0.2f,0.4f,0.2f));
+		mCam->getViewport()->setBackgroundColour(ColourValue(0.2f,0.4f,0.2f));
 	else
-		mCamera->getViewport()->setBackgroundColour(ColourValue(0.4f,0.2f,0.2f));
+	    mCam->getViewport()->setBackgroundColour(ColourValue(0.4f,0.2f,0.2f));
 	cout<<message<<endl;
 	Utils::log(message);
 
@@ -201,19 +202,21 @@ void ScriptInterpreter::createCamera(void)
 	BaseApplication::createCamera();
 
 	// Setup camera and light
-	mCamera->setNearClipDistance(.5);
+	mCam->setNearClipDistance(.5);
 	mCamera->setPosition(0,10,-50);
-	mCamera->lookAt(0,0,0);
+	mCamera->lookAt(Vector3(0,0,0), Node::TS_WORLD);
 }
 //-------------------------------------------------------------------------------------
 void ScriptInterpreter::createViewports(void)
 {
 	BaseApplication::createViewports();
-	mCamera->getViewport()->setBackgroundColour(ColourValue(0.2f,0.4f,0.2f));
+	mCam->getViewport()->setBackgroundColour(ColourValue(0.2f,0.4f,0.2f));
 }
 //-------------------------------------------------------------------------------------
 bool ScriptInterpreter::frameStarted(const FrameEvent& evt)
 {
+    BaseApplication::frameStarted(evt);
+
 	movingLight->setPosition(mCamera->getPosition());
 	if (mBatchMode)
 	{
@@ -236,6 +239,7 @@ bool ScriptInterpreter::frameStarted(const FrameEvent& evt)
 	return true;
 }
 //-------------------------------------------------------------------------------------
+#if 0
 bool ScriptInterpreter::keyReleased( const OIS::KeyEvent& arg )
 {
 	if (!mBatchMode)
@@ -263,6 +267,7 @@ bool ScriptInterpreter::keyReleased( const OIS::KeyEvent& arg )
 	}
 	return BaseApplication::keyReleased(arg);
 }
+#endif
 //-------------------------------------------------------------------------------------
 void ScriptInterpreter::writePerformanceFile()
 {

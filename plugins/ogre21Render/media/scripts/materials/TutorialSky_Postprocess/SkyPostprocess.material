@@ -91,7 +91,8 @@ material SkyPostprocess
 
 			texture_unit
 			{
-				texture SaintPetersBasilica.dds cubic gamma
+				texture SaintPetersBasilica.dds combinedUVW
+				tex_address_mode clamp
 				filtering			trilinear
 				tex_address_mode	clamp
 			}

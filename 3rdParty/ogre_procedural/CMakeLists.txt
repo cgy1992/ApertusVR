@@ -76,7 +76,8 @@ if (APPLE AND OGRE_BUILD_PLATFORM_APPLE_IOS)
 endif()
 set(Boost_ADDITIONAL_VERSIONS "1.58" "1.58.0" "1.57" "1.57.0" "1.56" "1.56.0" "1.55" "1.55.0" "1.54" "1.54.0" "1.53" "1.53.0" "1.52" "1.52.0" "1.51" "1.51.0" "1.50" "1.50.0" "1.49" "1.49.0" "1.48" "1.48.0" "1.47" "1.47.0" "1.46" "1.46.0" "1.45" "1.45.0" "1.44" "1.44.0" "1.42" "1.42.0" "1.41.0" "1.41" "1.40.0" "1.40")
 
-find_package(OGRE 1.10 QUIET)
+find_package(OGRE 1.10 REQUIRED)
+link_directories(${OGRE_LIBRARY_DIRS})
 
 # Unity build options
 # A Unity build includes all sources files in just a few actual compilation units
@@ -105,11 +106,11 @@ endif ()
 
 find_package(Doxygen)
 
-option(OgreProcedural_BUILD_SAMPLES "Build OgreProcedural samples." FALSE)
+option(OgreProcedural_BUILD_SAMPLES "Build OgreProcedural samples." TRUE)
 option(OgreProcedural_BUILD_TESTS "Build OgreProcedural test cases." FALSE)
 option(OgreProcedural_BUILD_SCRIPT_INTERPRETER "Build a lua test bench to prototype stuff with OgreProcedural." FALSE)
 option(OgreProcedural_BUILD_OGITOR_PLUGIN "Build Ogitor Plugin." FALSE)
-option(OgreProcedural_BUILD_DOCS "Build documentation (if Doxygen is installed)." FALSE)
+option(OgreProcedural_BUILD_DOCS "Build documentation (if Doxygen is installed)." TRUE)
 option(OgreProcedural_INSTALL_DOCS "Install documentation." FALSE)
 if(MSVC)
 	option(OgreProcedural_INSTALL_PDB "Install debug files." FALSE)
@@ -179,11 +180,11 @@ add_subdirectory(CMake)
 set(CPACK_PACKAGE_DESCRIPTION "OgreProcedural")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Ogre-Procedural is an Ogre3D based lib enabling developpers to quickly create geometric primitives, such as cubes, spheres, cylinders...")
 set(CPACK_PACKAGE_NAME "ogre-procedural")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "ois ogre")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "ogre")
 set(CPACK_PACKAGE_CONTACT "webmaster@ogreprocedural.org")
 set(CPACK_PACKAGE_VENDOR "webmaster@ogreprocedural.org")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/MIT.txt")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ReadMe.txt")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ReadMe.md")
 # TODO: add the version variable at the top in here
 SET(CPACK_PACKAGE_VERSION_MAJOR "0")
 SET(CPACK_PACKAGE_VERSION_MINOR "2")

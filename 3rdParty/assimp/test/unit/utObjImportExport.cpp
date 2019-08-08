@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
+Copyright (c) 2006-2019, assimp team
+
 
 
 All rights reserved.
@@ -77,7 +78,7 @@ static const float VertComponents[ 24 * 3 ] = {
      0.500000, -0.500000,  0.500000f
 };
 
-static const std::string ObjModel =
+static const char *ObjModel =
     "o 1\n"
     "\n"
     "# Vertex list\n"
@@ -104,7 +105,7 @@ static const std::string ObjModel =
     "\n"
     "# End of file\n";
 
-static const std::string ObjModel_Issue1111 =
+static const char *ObjModel_Issue1111 =
     "o 1\n"
     "\n"
     "# Vertex list\n"
@@ -230,7 +231,7 @@ TEST_F( utObjImportExport, exportObjFromFileTest ) {
 #endif // ASSIMP_BUILD_NO_EXPORT
 
 TEST_F( utObjImportExport, obj_import_test ) {
-    const aiScene *scene = m_im->ReadFileFromMemory( (void*) ObjModel.c_str(), ObjModel.size(), 0 );
+    const aiScene *scene = m_im->ReadFileFromMemory( (void*) ObjModel, strlen(ObjModel), 0 );
     aiScene *expected = createScene();
     EXPECT_NE( nullptr, scene );
 
@@ -251,7 +252,7 @@ TEST_F( utObjImportExport, obj_import_test ) {
 }
 
 TEST_F( utObjImportExport, issue1111_no_mat_name_Test ) {
-    const aiScene *scene = m_im->ReadFileFromMemory( ( void* ) ObjModel_Issue1111.c_str(), ObjModel_Issue1111.size(), 0 );
+    const aiScene *scene = m_im->ReadFileFromMemory( ( void* ) ObjModel_Issue1111, strlen(ObjModel_Issue1111), 0 );
     EXPECT_NE( nullptr, scene );
 }
 
@@ -266,8 +267,30 @@ TEST_F( utObjImportExport, issue809_vertex_color_Test ) {
 #endif // ASSIMP_BUILD_NO_EXPORT
 }
 
+TEST_F( utObjImportExport, issue1923_vertex_color_Test ) {
+    ::Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile( ASSIMP_TEST_MODELS_DIR "/OBJ/cube_with_vertexcolors_uni.obj", aiProcess_ValidateDataStructure );
+    EXPECT_NE( nullptr, scene );
+
+    scene = importer.GetOrphanedScene();
+
+#ifndef ASSIMP_BUILD_NO_EXPORT
+    ::Assimp::Exporter exporter;
+    const aiExportDataBlob* blob = exporter.ExportToBlob( scene, "obj");
+    EXPECT_NE( nullptr, blob );
+
+    const aiScene *sceneReImport = importer.ReadFileFromMemory( blob->data, blob->size, aiProcess_ValidateDataStructure );
+    EXPECT_NE( nullptr, scene );
+
+    SceneDiffer differ;
+    EXPECT_TRUE( differ.isEqual( scene, sceneReImport ) );
+#endif // ASSIMP_BUILD_NO_EXPORT
+
+    delete scene;
+}
+
 TEST_F( utObjImportExport, issue1453_segfault ) {
-    static const std::string ObjModel =
+    static const char *ObjModel =
         "v  0.0  0.0  0.0\n"
         "v  0.0  0.0  1.0\n"
         "v  0.0  1.0  0.0\n"
@@ -278,12 +301,12 @@ TEST_F( utObjImportExport, issue1453_segfault ) {
         "v  1.0  1.0  1.0\nB";
 
     Assimp::Importer myimporter;
-    const aiScene *scene = myimporter.ReadFileFromMemory( ObjModel.c_str(), ObjModel.size(), aiProcess_ValidateDataStructure );
+    const aiScene *scene = myimporter.ReadFileFromMemory( ObjModel, strlen(ObjModel), aiProcess_ValidateDataStructure );
     EXPECT_EQ( nullptr, scene );
 }
 
 TEST_F(utObjImportExport, relative_indices_Test) {
-    static const std::string ObjModel =
+    static const char *ObjModel =
         "v -0.500000 0.000000 0.400000\n"
         "v -0.500000 0.000000 -0.800000\n"
         "v -0.500000 1.000000 -0.800000\n"
@@ -291,7 +314,7 @@ TEST_F(utObjImportExport, relative_indices_Test) {
         "f -4 -3 -2 -1\nB";
 
     Assimp::Importer myimporter;
-    const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel.c_str(), ObjModel.size(), aiProcess_ValidateDataStructure);
+    const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel, strlen(ObjModel), aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
 
     EXPECT_EQ(scene->mNumMeshes, 1U);
@@ -308,14 +331,14 @@ TEST_F(utObjImportExport, relative_indices_Test) {
 }
 
 TEST_F(utObjImportExport, homogeneous_coordinates_Test) {
-    static const std::string ObjModel =
+    static const char *ObjModel =
         "v -0.500000 0.000000 0.400000 0.50000\n"
         "v -0.500000 0.000000 -0.800000 1.00000\n"
         "v 0.500000 1.000000 -0.800000 0.5000\n"
         "f 1 2 3\nB";
 
     Assimp::Importer myimporter;
-    const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel.c_str(), ObjModel.size(), aiProcess_ValidateDataStructure);
+    const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel, strlen(ObjModel), aiProcess_ValidateDataStructure);
     EXPECT_NE(nullptr, scene);
 
     EXPECT_EQ(scene->mNumMeshes, 1U);
@@ -330,14 +353,65 @@ TEST_F(utObjImportExport, homogeneous_coordinates_Test) {
     EXPECT_EQ(vertice.z, 0.8f);
 }
 
+TEST_F(utObjImportExport, homogeneous_coordinates_divide_by_zero_Test) {
+  static const char *ObjModel =
+    "v -0.500000 0.000000 0.400000 0.\n"
+    "v -0.500000 0.000000 -0.800000 1.00000\n"
+    "v 0.500000 1.000000 -0.800000 0.5000\n"
+    "f 1 2 3\nB";
+
+  Assimp::Importer myimporter;
+  const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel, strlen(ObjModel), aiProcess_ValidateDataStructure);
+  EXPECT_EQ(nullptr, scene);
+}
+
 TEST_F(utObjImportExport, 0based_array_Test) {
-    static const std::string ObjModel =
+    static const char *ObjModel =
         "v -0.500000 0.000000 0.400000\n"
         "v -0.500000 0.000000 -0.800000\n"
         "v -0.500000 1.000000 -0.800000\n"
         "f 0 1 2\nB";
 
-    Assimp::Importer myimporter;
-    const aiScene *scene = myimporter.ReadFileFromMemory(ObjModel.c_str(), ObjModel.size(), 0);
+    Assimp::Importer myImporter;
+    const aiScene *scene = myImporter.ReadFileFromMemory(ObjModel, strlen(ObjModel), 0);
     EXPECT_EQ(nullptr, scene);
+}
+
+TEST_F(utObjImportExport, invalid_normals_uvs) {
+    static const char *ObjModel =
+        "v -0.500000 0.000000 0.400000\n"
+        "v -0.500000 0.000000 -0.800000\n"
+        "v -0.500000 1.000000 -0.800000\n"
+		"vt 0 0\n"
+		"vn 0 1 0\n"
+        "f 1/1/1 1/1/1 2/2/2\nB";
+
+    Assimp::Importer myImporter;
+    const aiScene *scene = myImporter.ReadFileFromMemory(ObjModel, strlen(ObjModel), 0);
+    EXPECT_NE(nullptr, scene);
+}
+
+TEST_F( utObjImportExport, mtllib_after_g ) {
+    ::Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile( ASSIMP_TEST_MODELS_DIR "/OBJ/cube_mtllib_after_g.obj", aiProcess_ValidateDataStructure );
+    ASSERT_NE( nullptr, scene );
+
+    EXPECT_EQ(scene->mNumMeshes, 1U);
+    const aiMesh *mesh = scene->mMeshes[0];
+    const aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+    aiString name;
+    ASSERT_EQ(aiReturn_SUCCESS, mat->Get(AI_MATKEY_NAME, name));
+    EXPECT_STREQ("MyMaterial", name.C_Str());
+}
+
+TEST_F(utObjImportExport, import_point_cloud) {
+    ::Assimp::Importer importer;
+    const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/OBJ/point_cloud.obj", 0 );
+    ASSERT_NE(nullptr, scene);
+}
+
+TEST_F(utObjImportExport, import_without_linend) {
+    Assimp::Importer myImporter;
+    const aiScene *scene = myImporter.ReadFile(ASSIMP_TEST_MODELS_DIR "/OBJ/box_without_lineending.obj", 0);
+    ASSERT_NE(nullptr, scene);
 }

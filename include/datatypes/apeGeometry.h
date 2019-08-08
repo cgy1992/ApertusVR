@@ -40,6 +40,8 @@ namespace ape
 
 	typedef std::vector<float> GeometryNormals;
 
+	typedef std::vector<float> GeometryTangents;
+
 	typedef std::vector<float> GeometryColors;
 
 	typedef std::vector<float> GeometryTextureCoordinates;

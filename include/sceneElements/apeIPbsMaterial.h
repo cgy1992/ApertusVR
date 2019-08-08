@@ -40,10 +40,20 @@ namespace ape
 
 		virtual ~IPbsMaterial() {};
 
+		ape::Color mDiffuseColor;
+
+		ape::Color mEmissiveColor;
+
+		ape::Color mSpecularColor;
+
+		float mMetalness;
+
+		float mBaseColor;
+
 	public:
 		//virtual void setAlbedo(ape::Color albedo) = 0;
 
-		//virtual void setRoughness(float roughness) = 0;
+		virtual void setRoughness(float roughness) = 0;
 
 		//virtual void setLightRoughnessOffset(float lightRoughnessOffset) = 0;
 
@@ -51,21 +61,54 @@ namespace ape
 
 		//virtual ape::Color getAlbedo() = 0;
 
-		//virtual float getRoughness() = 0;
+		virtual float getRoughness() = 0;
 
 		//virtual float getLightRoughnessOffset() = 0;
 
 		//virtual ape::Color getF0() = 0;
 
-		//virtual void setDiffuseColor(Color diffuse) = 0;
+		virtual void setDiffuseColor(Color diffuse) = 0;
 
-		//virtual void setSpecularColor(Color specular) = 0;
+		virtual ape::Color getDiffuseColor() = 0;
+
+		virtual void setSpecularColor(Color specular) = 0;
 
 		//virtual void setAmbientColor(Color ambient) = 0;
 
-		//virtual void setEmissiveColor(Color emissive) = 0;
+		virtual void setEmissiveColor(Color emissive) = 0;
+
+		virtual ape::Color getEmissiveColor() = 0;
+
+		virtual void setAlphaMode(std::string alphaMode) = 0;
+
+		virtual std::string getAlphaMode() = 0;
+
+		virtual void setAlphaCutoff(float alphaCutoff) = 0;
+
+		virtual float getAlphaCutoff() = 0;
+
+		virtual void setMetallicRoughnessTexture(std::string path) = 0;
+
+		virtual std::string getMetallicRoughnessTexture() = 0;
+
+		virtual void setBaseColorTexture(std::string path) = 0;
+
+		virtual std::string getBaseColorTexture() = 0;
+
+		virtual void setNormalTexture(std::string path) = 0;
+
+		virtual std::string getNormalTexture() = 0;
+
 
 		//virtual void setShininess(float shininess) = 0;
+
+		virtual void setMetalness(float MetallicRoughness) = 0;
+
+		virtual float getMetalness() = 0;
+
+		virtual void setBaseColor(float MetallicRoughness) = 0;
+
+		virtual float getBaseColor() = 0;
 	};
 }
 

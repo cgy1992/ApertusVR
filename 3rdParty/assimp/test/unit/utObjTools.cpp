@@ -3,7 +3,8 @@
 Open Asset Import Library (assimp)
 ---------------------------------------------------------------------------
 
-Copyright (c) 2006-2017, assimp team
+Copyright (c) 2006-2019, assimp team
+
 
 
 All rights reserved.
@@ -114,4 +115,3 @@ TEST_F( utObjTools, countComponents_TwoLines_Success ) {
     size_t numComps = test_parser.testGetNumComponentsInDataDefinition();
     EXPECT_EQ( 3U, numComps );
 }
-

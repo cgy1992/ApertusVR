@@ -124,12 +124,12 @@ public:
 
 	void setParametersWithMaterial(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryColors colors, ManualMaterialJsPtr manualMaterial)
 	{
-		mPtr.lock()->setParameters(groupName, coordinates, indices, normals, true, colors, ape::GeometryTextureCoordinates(), manualMaterial.getManualMaterialSharedPtr());
+		mPtr.lock()->setParameters(groupName, coordinates, indices, normals, ape::GeometryTangents(), true, colors, ape::GeometryTextureCoordinates(), manualMaterial.getManualMaterialSharedPtr());
 	}
 
 	void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryColors colors)
 	{
-		mPtr.lock()->setParameters(groupName, coordinates, indices, normals, true, colors, ape::GeometryTextureCoordinates(), ape::MaterialWeakPtr());
+		mPtr.lock()->setParameters(groupName, coordinates, indices, normals, ape::GeometryTangents(), true, colors, ape::GeometryTextureCoordinates(), ape::MaterialWeakPtr());
 	}
 };
 
@@ -137,7 +137,7 @@ using namespace ape;
 NBIND_CLASS(GeometryIndexedFaceSetParameters)
 {
 	construct<>();
-	construct<std::string, GeometryCoordinates, GeometryIndices, GeometryNormals, bool, GeometryColors, GeometryTextureCoordinates, MaterialWeakPtr>();
+	construct < std::string, GeometryCoordinates, GeometryIndices, GeometryNormals, GeometryTangents, bool, GeometryColors, GeometryTextureCoordinates, MaterialWeakPtr > ();
 
 	method(getCoordinates);
 	method(getIndices);

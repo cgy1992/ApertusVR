@@ -103,6 +103,16 @@ namespace ape
 		return Ogre::ColourValue(p_colv.r, p_colv.g, p_colv.b, p_colv.a);
 	}
 
+	inline Ogre::Vector3 ConversionToOgre21_Alfaless(const ape::Color& p_colv)
+	{
+		return Ogre::Vector3(p_colv.r, p_colv.g, p_colv.b);
+	}
+
+	inline float ConversionToOgre21_Alfa(const ape::Color& p_colv)
+	{
+		return p_colv.a;
+	}
+
 	inline ape::Color ConversionFromOgre21(const Ogre::ColourValue& p_colv)
 	{
 		return ape::Color(p_colv.r, p_colv.g, p_colv.b, p_colv.a);
@@ -117,6 +127,8 @@ namespace ape
 		}
 		return vec;
 	}
+
+
 
 	inline ape::ColorVector ConversionFromOgre21(const std::vector<Ogre::ColourValue> &cVec)
 	{

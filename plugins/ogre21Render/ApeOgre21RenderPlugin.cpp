@@ -65,6 +65,7 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 	mOgreRenderPluginConfig = ape::Ogre21RenderPluginConfig();
 	mOgreCameras = std::vector<Ogre::Camera*>();
 	mCameraCountFromConfig = 0;
+	mpActualRenderwindow = nullptr;
 
 
 	APE_LOG_FUNC_LEAVE();
@@ -73,7 +74,8 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 ape::Ogre21RenderPlugin::~Ogre21RenderPlugin() //destructor
 {
 	std::cout << "OgreRenderPlugin dtor" << std::endl;
-
+	Ogre::CompositorManager2* compositorManager = mpRoot->getCompositorManager2();
+	compositorManager->removeAllWorkspaces();
 	delete mpRoot;
 }
 
@@ -120,8 +122,12 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									ogreOldParentNode->removeChild(ogreNode);
 								}
 								auto ogreNodeList = mpSceneMgr->findSceneNodes(parentNode->getName());
-								auto ogreNewParentNode = mpSceneMgr->getSceneNode(ogreNodeList[0]->getId());
-								ogreNewParentNode->addChild(ogreNode);
+								if (ogreNodeList[0] != nullptr)
+								{
+									auto ogreNewParentNode = mpSceneMgr->getSceneNode(ogreNodeList[0]->getId());
+									ogreNewParentNode->addChild(ogreNode);
+								}
+									
 
 							}
 						}
@@ -183,9 +189,15 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					break;
 				case ape::Event::Type::MATERIAL_FILE_SETASSKYBOX:
 				{
-					if (Ogre::MaterialManager::getSingleton().resourceExists(materialName))
-						mpSceneMgr->setSkyBox(true, materialName);
-
+					Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName("SkyPostprocess");
+					if (materialPtr.isNull())
+						return;
+					Ogre::Material* material = materialPtr.getPointer();
+					Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+					tex->setCubicTextureName(materialName+".dds", true);
+					tex->setGamma(2.0);
+					material->compile();
+					mpActualWorkSpace->setEnabled(true);
 				}
 				break;
 				case ape::Event::Type::MATERIAL_FILE_TEXTURE:
@@ -273,10 +285,26 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 							//Ogre::Item* Item = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
 							mItemList[geometryName] = item;
 						}
+					} 
+					else if(mManualObjectList[fileName])
+					{
+						auto ogreManual = mManualObjectList[fileName];
+						std::stringstream meshName;
+						meshName << fileName << ".mesh";
+						if (Ogre::MeshManager::getSingleton().getByName(meshName.str()).isNull())
+						{
+							//ogreManual->convertToMesh(meshName.str());
+							Ogre::MeshPtr v2Mesh;
+							v2Mesh = Ogre::MeshManager::getSingleton().createManual(fileName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+							
+							
+						}
+						if (!mItemList[geometryName])
+						{
+							auto item = mpSceneMgr->createItem(geometryName);
+							mItemList[geometryName] = item;
+						}
 					}
-					  
-					/*else if(hasManualObject(fileName))
-					{ }*/
 				}
 				break;
 				case ape::Event::Type::GEOMETRY_FILE_MERGESUBMESHES:
@@ -347,7 +375,8 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 										}
 									}
 									mpSceneMgr->destroyManualObject(ogreManual);
-									auto ogreEntity = mpSceneMgr->createEntity(geometryName, meshName.str());
+									auto ogreItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+									mItemList[geometryName] = ogreItem;
 								}
 							}
 						}
@@ -501,6 +530,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						// procedural not yet implemented
 						//Procedural::PlaneGenerator().setNumSegX(parameters.numSeg.x).setNumSegY(parameters.numSeg.y).setSizeX(parameters.size.x).setSizeY(parameters.size.y)
 							//.setUTile(parameters.tile.x).setVTile(parameters.tile.y).realizeMesh(meshFileName.str());
+
 					}
 					Ogre::Item* planeItem = mpSceneMgr->createItem(geometryName,Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,Ogre::SCENE_DYNAMIC);
 					mItemList[geometryName] = planeItem;
@@ -853,7 +883,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						//	.setUTile(parameters.tile)
 						//	.realizeMesh(meshFileName.str());
 					}
-					Ogre::Item* tubeItem = mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
+					Ogre::Item* tubeItem = mpSceneMgr->createItem(meshFileName.str(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::SCENE_DYNAMIC);
 					mItemList[geometryName] = tubeItem;
 
 				}
@@ -894,11 +924,11 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					}
 					else if (mItemList[geometryName])
 					{
-						if (auto ogreEntity = mItemList[geometryName])
+						if (auto ogreItem = mItemList[geometryName])
 						{
 							auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
 							if (auto ogreParentNode = parentList[0])
-								ogreParentNode->attachObject(ogreEntity);					
+								;//ogreParentNode->attachObject(ogreItem);					
 						}
 					}
 				}
@@ -912,8 +942,10 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					{
 						if (auto material = manual->getMaterial().lock())
 						{
-							auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
-							ogreItem->setMaterial(ogreMaterial);
+							auto ogreMaterial = mpRoot->getHlmsManager()->getDatablock(material->getName());
+							ogreItem->setDatablock(ogreMaterial);
+							//auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+							//ogreItem->setMaterial(ogreMaterial);
 						}	
 					}
 				}
@@ -925,10 +957,12 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					//meshFileName << geometryName << ".mesh";
 					//if (!Ogre::ResourceGroupManager::getSingleton().resourceExists(Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, meshFileName.str()))
 					//{
-					if (!mManualObjectList[geometryName])
+					/*if (!mManualObjectList[geometryName])
 					{
-						auto ogreManual = mManualObjectList[geometryName];
+						auto ogreManual = mpSceneMgr->createManualObject();
+						ogreManual->setName(geometryName);	
 						ogreManual->setStatic(false);
+						mManualObjectList[geometryName] = ogreManual;
 					}
 					if (mManualObjectList[geometryName])
 					{
@@ -953,7 +987,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									Ogre::Vector3 coordinateNormal((v1).crossProduct(v2));
 									normals.push_back(coordinateNormal);
 								}*/
-								normals.resize(parameters.coordinates.size() / 3);
+								/*normals.resize(parameters.coordinates.size() / 3);
 								for (int normalIndex = 0; normalIndex < normals.size(); normalIndex++)
 									normals[normalIndex] = Ogre::Vector3::ZERO;
 								int indexIndex = 0;
@@ -1030,16 +1064,19 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								}
 							}
 							Ogre::MaterialPtr ogreMaterial = Ogre::MaterialPtr();
+							std::string name = "";
 							if (auto material = parameters.material.lock())
 							{
-								ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
+								auto ogreMat = mpRoot->getHlmsManager()->getDatablock(material->getName());
+								name = material->getName();
+								//ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
 								// Ogre v1
-								//ogreManual->begin(material->getName(), Ogre::RenderOperation::OperationType::OT_TRIANGLE_LIST);
+								ogreManual->begin(material->getName());
 							}
 							else
 							{
 								//Ogre v1
-								//ogreManual->begin("FlatVertexColorLighting", Ogre::RenderOperation::OperationType::OT_TRIANGLE_LIST);
+								ogreManual->begin("FlatVertexColorLighting");
 							}
 							for (int i = 0; i < parameters.coordinates.size(); i = i + 3)
 							{
@@ -1052,6 +1089,10 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								else if (parameters.normals.size() > i && parameters.normals.size() > 0)
 								{
 									ogreManual->normal(Ogre::Vector3(parameters.normals[i], parameters.normals[i + 1], parameters.normals[i + 2]));
+								}
+								if (parameters.tangents.size() > i && parameters.tangents.size() > 0)
+								{
+									ogreManual->tangent(Ogre::Vector3(parameters.tangents[i], parameters.tangents[i + 1], parameters.tangents[i + 2]));
 								}
 								if (parameters.textureCoordinates.size() > 0)
 								{
@@ -1090,9 +1131,82 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 									indexIndex = indexIndex + indexCount + 1;
 								}
 							}
-							ogreManual->end();
-						}
-					}
+							ogreManual->end();*/
+							//------
+							
+							/*const auto mainMeshIndex = (model.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes.front()].mesh : 0);
+							const auto mainMeshIndex = (material.defaultScene != 0 ? model.nodes[model.scenes[model.defaultScene].nodes.front()].mesh : 0);
+							const auto& mesh = model.meshes[mainMeshIndex];
+							Ogre::Aabb boundingBox;*///ezt kell mondjuk az assimpba 
+							
+
+							//Ogre::Aabb boundingBox;
+							//auto OgreMesh = Ogre::MeshManager::getSingleton().getByName(geometryName);
+							//if (!OgreMesh)//ha van mar akk skip
+							{
+								//OgreMesh = Ogre::MeshManager::getSingleton().createManual(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+								//ezzel kell vmit kezdeni
+								Ogre::Vector3* c_vertices = (Ogre::Vector3 *)malloc(0x7fffffff);
+								Ogre::uint16* c_indexData= (Ogre::uint16 *)malloc(0x7fffffff);
+								for (int i = 0; i < parameters.normals.size(); i++)
+								{
+									c_vertices[i] = parameters.normals[i];
+								}
+								for (int i = 0; i < parameters.indices.size(); i++)
+								{
+									c_indexData[i] = parameters.indices[i];
+								}
+
+
+
+								Ogre::VertexElement2Vec vertexElements;
+								vertexElements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_POSITION));
+								Ogre::VaoManager *vaoManager = mpSceneMgr->getDestinationRenderSystem()->getVaoManager();
+								Ogre::VertexBufferPacked *vertexBuffer = vaoManager->createVertexBuffer(vertexElements, parameters.normals.size(),
+									Ogre::BT_IMMUTABLE,
+									(void*)c_vertices, false);
+								Ogre::IndexBufferPacked *indexBuffer = vaoManager->createIndexBuffer(Ogre::IndexBufferPacked::IT_16BIT,
+									parameters.indices.size(), Ogre::BT_IMMUTABLE,
+									(void*)c_indexData, false);
+								Ogre::VertexBufferPackedVec vertexBuffers(1, vertexBuffer);
+								Ogre::VertexArrayObject *vao = vaoManager->createVertexArrayObject(vertexBuffers, indexBuffer,
+									Ogre::OT_TRIANGLE_LIST);
+
+								auto OgreMesh = Ogre::MeshManager::getSingleton().createManual(
+									geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+								OgreMesh->_setBounds(Ogre::Aabb(Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_SCALE));
+
+								Ogre::SubMesh *subMesh = OgreMesh->createSubMesh();
+								for (int i = 0; i < Ogre::NumVertexPass; ++i)
+									subMesh->mVao[i].push_back(vao);
+								//subMesh->mMaterialName = "";
+
+								
+								
+								
+								//nemtom kelle 
+								Ogre::RenderQueue *renderQueue = mpSceneMgr->getRenderQueue();
+								renderQueue->setRenderQueueMode(250, Ogre::RenderQueue::FAST);
+								renderQueue->setSortRenderQueue(250, Ogre::RenderQueue::DisableSort);
+
+								//createItem resz
+								auto item = mpSceneMgr->createItem(OgreMesh);
+								mItemList[geometryName] = item;
+								
+								//******
+								item->setRenderQueueGroup(250);
+								item->setVisibilityFlags(1u << 25u);
+								item->setCastShadows(false);
+								mpSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(item);
+								auto ads = manual->getMaterial().lock();
+								auto ogreMaterial = mpRoot->getHlmsManager()->getDatablock(ads->getName());
+								item->setDatablock(ogreMaterial);
+								
+								//---------
+							}
+
+					//	}
+					//}
 				}
 				break;
 				}
@@ -1134,7 +1248,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					if (auto ogreManual = mManualObjectList[geometryName])
 					{
 						// Ogre v1
-						//ogreManual->begin("FlatVertexColorNoLighting", Ogre::RenderOperation::OperationType::OT_LINE_LIST);
+						ogreManual->begin("FlatVertexColorNoLighting");
 						for (int coordinateIndex = 0; coordinateIndex < parameters.coordinates.size(); coordinateIndex = coordinateIndex + 3)
 						{
 							ogreManual->position(parameters.coordinates[coordinateIndex], parameters.coordinates[coordinateIndex + 1], parameters.coordinates[coordinateIndex + 2]);
@@ -1152,9 +1266,10 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						}
 						ogreManual->end();
 						Ogre::MeshPtr mesh = Ogre::MeshManager::getSingleton().createManual(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-						mpSceneMgr->createEntity(geometryName, geometryName);
+						auto item =  mpSceneMgr->createItem(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
 						mpSceneMgr->destroyManualObject(mManualObjectList[geometryName]);
 						mManualObjectList.erase(geometryName);
+						mItemList[geometryName] = item;
 					}
 
 				}
@@ -1214,12 +1329,194 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				}
 			}
 		}*/
+		else if (event.group == ape::Event::Group::MATERIAL_PBS)
+		{
+		if (auto materialPbs = std::static_pointer_cast<ape::IPbsMaterial>(mpSceneManager->getEntity(event.subjectName).lock()))
+		{
+			//--
+			std::string materialName = materialPbs->getName();
+			auto HlmsPbs = static_cast<Ogre::HlmsPbs*>(Ogre::Root::getSingleton().getHlmsManager()->getHlms(Ogre::HlmsTypes::HLMS_PBS));
+			Ogre::HlmsPbsDatablock* datablock;
+			if (mPbsDataBlockList[materialName] == nullptr)
+			{
+				datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->createDatablock(Ogre::IdString(materialName),
+								materialName,
+								Ogre::HlmsMacroblock{},
+								Ogre::HlmsBlendblock{},
+								Ogre::HlmsParamVec{}));
+				datablock->setWorkflow(Ogre::HlmsPbsDatablock::Workflows::MetallicWorkflow);
+				mPbsDataBlockList[materialName] = datablock;
+			}
+			else
+			{
+				datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->getDatablock(Ogre::IdString(materialName)));
+			}
+			//datablock
+			//---
+			switch (event.type)
+			{
+			case ape::Event::Type::MATERIAL_PBS_CREATE:
+				;
+				break;
+			case ape::Event::Type::MATERIAL_PBS_DELETE:
+				;
+				break;
+			case ape::Event::Type::MATERIAL_PBS_DIFFUSE: //base color + alfa
+			{
+				datablock->setDiffuse(ConversionToOgre21_Alfaless(materialPbs->getDiffuseColor()));
+				float alpha = (ConversionToOgre21_Alfa(materialPbs->getDiffuseColor()));
+				auto transparentMode = (alpha == 1) ? Ogre::HlmsPbsDatablock::None : Ogre::HlmsPbsDatablock::Transparent;
+				datablock->setTransparency(alpha, transparentMode);
+			}
+				
+				break;
+			case ape::Event::Type::MATERIAL_PBS_SPECULAR:
+				;
+				break;
+			case ape::Event::Type::MATERIAL_PBS_AMBIENT:
+				;
+				break;
+			case ape::Event::Type::MATERIAL_PBS_EMISSIVE:
+			{
+				datablock->setEmissive(ConversionToOgre21_Alfaless(materialPbs->getEmissiveColor()));
+			}
+				break;
+			case ape::Event::Type::MATERIAL_PBS_ALPHAMODE:
+			{
+				if (materialPbs->getAlphaMode() == "BLEND")
+				{
+					auto blendBlock = *datablock->getBlendblock();
+					blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+					datablock->setBlendblock(blendBlock);
+				}
+				else if (materialPbs->getAlphaMode() == "MASK")
+				{
+					datablock->setAlphaTest(Ogre::CMPF_GREATER_EQUAL);
+				}
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_BASECOLOR_TEXTURE:
+			{
+				
+				auto texture = materialPbs->getBaseColorTexture();
+				Ogre::TexturePtr texptr = mpRoot->getTextureManager()->getByName(texture);
+				datablock->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE, 0, texptr);
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_METALLICROUGHNESS_TEXTURE:
+			{
+				Ogre::Image img = Ogre::Image();
+				img.load(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				//Ogre::TexturePtr metalTex = mpRoot->getTextureManager()->loadImage(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, img);
+
+				const auto pixelFormat = [&] {
+					if (!(img.getHasAlpha())) return Ogre::PF_BYTE_RGB;
+					if (img.getHasAlpha()) return Ogre::PF_BYTE_RGBA;
+				}();
+
+				const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+				bool isHardwareGammaEnabled;
+				const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
+				if (renderSystemGammaConversionConfigOption.currentValue != "Yes")
+				{
+					isHardwareGammaEnabled = true;
+				}
+				else
+				{
+					isHardwareGammaEnabled = false;
+				}
+					
+				
+
+				Ogre::TexturePtr metalTex = mpRoot->getTextureManager()->createManual(materialPbs->getMetallicRoughnessTexture(),
+																					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+																					Ogre::TextureType::TEX_TYPE_2D_ARRAY, img.getWidth(),
+																					img.getHeight(),
+																					1,
+																					1,
+																					pixelFormat,
+																					Ogre::TU_DEFAULT,
+																					nullptr,
+																					isHardwareGammaEnabled);
+
+
+				if (metalTex)
+				{
+					//OgreLog("metalness greyscale texture extracted by textureImporter : " + metalTexure->getName());
+					datablock->setTexture(Ogre::PBSM_METALLIC, 0, metalTex);
+				}
+
+				/*if (roughTexure)
+				{
+					//OgreLog("roughness geyscale texture extracted by textureImporter : " + roughTexure->getName());
+					datablock->setTexture(Ogre::PBSM_ROUGHNESS, 0, roughTexure);
+				}*/
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_BASECOLOR:
+			{
+
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_METALNESS:
+			{
+				datablock->setMetalness(materialPbs->getMetalness());
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_ROUGHNESS:
+			{
+				datablock->setRoughness(materialPbs->getRoughness());
+			}
+			break;
+			/*case ape::Event::Type::MATERIAL_PBS_PASS:
+			{
+
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_TEXTURE:
+			{
+
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_CULLINGMODE:
+			{
+				
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_DEPTHBIAS:
+			{
+				
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_LIGHTING:
+			{
+				
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_SCENEBLENDING:
+			{
+				
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_OVERLAY:
+			{
+				
+			}
+			break;*/
+			}
+		}
+		Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
+		}
 		else if (event.group == ape::Event::Group::MATERIAL_MANUAL)
 		{
 			if (auto materialManual = std::static_pointer_cast<ape::IManualMaterial>(mpSceneManager->getEntity(event.subjectName).lock()))
 			{
 				std::string materialName = materialManual->getName();
 				auto result = Ogre::MaterialManager::getSingleton().createOrRetrieve(materialName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				//--
+				
+			
+				//---
 				Ogre::MaterialPtr ogreMaterial = result.first.staticCast<Ogre::Material>();
 				switch (event.type)
 				{
@@ -1231,6 +1528,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					break;
 				case ape::Event::Type::MATERIAL_MANUAL_DIFFUSE:
 					ogreMaterial->setDiffuse(ConversionToOgre21(materialManual->getDiffuseColor()));
+					//datablock->setDiffuse;
 					break;
 				case ape::Event::Type::MATERIAL_MANUAL_SPECULAR:
 					ogreMaterial->setSpecular(ConversionToOgre21(materialManual->getSpecularColor()));
@@ -1256,12 +1554,15 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				{
 					if (auto texture = materialManual->getPassTexture().lock())
 					{
-						auto ogreTexture = Ogre::TextureManager::getSingleton().getByName(texture->getName());
+						Ogre::TexturePtr ogreTexture = Ogre::TextureManager::getSingleton().getByName(texture->getName(), Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME);
+						Ogre::HlmsTextureManager* texmgr = mpRoot->getHlmsManager()->getTextureManager();
+						//texmgr->createOrRetrieveTexture(texture->getName(),)
 						if (!ogreTexture.isNull() && !ogreMaterial.isNull())
 						{
 							if (!ogreMaterial->getTechnique(0)->getPass(0)->getNumTextureUnitStates())
 								ogreMaterial->getTechnique(0)->getPass(0)->createTextureUnitState();
 							ogreMaterial->getTechnique(0)->getPass(0)->getTextureUnitState(0)->setTexture(ogreTexture);
+
 						}
 					}
 				}
@@ -1274,7 +1575,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				break;
 				case ape::Event::Type::MATERIAL_MANUAL_DEPTHBIAS:
 				{
-					// Ogre c1
+					// Ogre v1
 					//ogreMaterial->setDepthBias(materialManual->getDepthBias().x, materialManual->getDepthBias().x);
 				}
 				break;
@@ -1321,6 +1622,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				break;
 				}
 			}
+			Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
 		}
 		/*else if (event.group == ape::Event::Group::PASS_PBS)
 		{
@@ -1713,7 +2015,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 													ogreViewPort->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 												}*///nincs
 												//------------------
-
+												mpActualRenderwindow = mRenderWindows[camera->getWindow()];
 
 												
 												Ogre::IdString workspaceName("MyOwnWorkspace");
@@ -1724,46 +2026,25 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 												//compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
 												//	"MyOwnWorkspace", true);
 												//compositorManager->addWorkspaceDefinition("WorkSpace01");
-												auto asd = compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
-													"TutorialSky_PostprocessWorkspace", true);
+												mpActualWorkSpace = compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
+													"SkyPostprocessWorkspace", true);
 												//asd->setEnabled(false);
 												//--------
 												
 												//--------
-
-												/*
-
-												static const Ogre::String SKYBOX_WORKSPACE = "SkyPostprocessWorkspace";
-												Ogre::CompositorManager2* compositorManager2 = mpRoot->getCompositorManager2();
-												if (!compositorManager2->hasWorkspaceDefinition(SKYBOX_WORKSPACE))
-													compositorManager2->createBasicWorkspaceDef(SKYBOX_WORKSPACE, Ogre::ColourValue(0.8f, 0.0f, 0.8f));
-												
-												Ogre::CompositorWorkspace* mWorkspaceRttSkyBox = compositorManager2->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera, SKYBOX_WORKSPACE, true);
-												mWorkspaceRttSkyBox->setEnabled(false);
-
-
-
-
-												static const Ogre::String SKYBOX_MATERIAL_NAME = "SkyPostprocess";
-
-
-												Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName(SKYBOX_MATERIAL_NAME);
+												//change sky
+												Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName("SkyPostprocess");
 												if (materialPtr.isNull())
 													return;
 
 												Ogre::Material* material = materialPtr.getPointer();
 												Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-												tex->setCubicTextureName("Tantolunden.dds", true);
+												tex->setCubicTextureName("Teide.dds", true);
 												tex->setGamma(2.0);
 												material->compile();
-												mWorkspaceRttSkyBox->setEnabled(true);
+												mpActualWorkSpace->setEnabled(true);
+
 												
-
-
-												*/
-
-
-
 												//--------
 
 												
@@ -1773,7 +2054,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								}
 							}
 						}
-						ogreCamera->lookAt(Ogre::Vector3(0, 0, 0));
+						//ogreCamera->lookAt(Ogre::Vector3(0, 0, 0));
 					}
 				}
 					break;
@@ -1893,6 +2174,8 @@ bool ape::Ogre21RenderPlugin::frameRenderingQueued(const Ogre::FrameEvent& evt)
 
 bool ape::Ogre21RenderPlugin::frameEnded(const Ogre::FrameEvent& evt)
 {
+
+	
 	return Ogre::FrameListener::frameEnded(evt);
 }
 
@@ -1934,6 +2217,9 @@ void ape::Ogre21RenderPlugin::Run()
 		APE_LOG_ERROR(ex.getFullDescription());
 	}
 	APE_LOG_FUNC_LEAVE();
+
+
+
 }
 
 
@@ -1942,6 +2228,7 @@ void ape::Ogre21RenderPlugin::Step()
 	try
 	{
 		mpRoot->renderOneFrame();
+
 #ifndef __APPLE__
 		Ogre::WindowEventUtilities::messagePump();
 #endif
@@ -2191,8 +2478,10 @@ void ape::Ogre21RenderPlugin::Init()
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/SdkTrays.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/Sinbad.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/skybox.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);*/
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/Compositors", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/materials/TutorialSky_Postprocess", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/Compositors", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/materials/TutorialSky_Postprocess", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/apeSky", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	
 	for (auto resourceLocation : mpCoreConfig->getNetworkConfig().resourceLocations)
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resourceLocation, "FileSystem");
 

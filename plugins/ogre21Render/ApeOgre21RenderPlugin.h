@@ -83,6 +83,12 @@ SOFTWARE.*/
 
 #include <OgreCompositorWorkspace.h>
 
+#include "OgreHlmsManager.h"
+
+
+
+
+
 
 //ApertusVR includes
 #include "managers/apeILogManager.h"
@@ -168,7 +174,13 @@ namespace ape
 
 		std::map<std::string, Ogre::ManualObject*> mManualObjectList;
 
+		std::map<std::string, Ogre::HlmsPbsDatablock*> mPbsDataBlockList;
+
 		std::vector<Ogre::Camera*> mOgreCameras;
+
+		Ogre::RenderWindow* mpActualRenderwindow;
+
+		Ogre::CompositorWorkspace* mpActualWorkSpace;
 
 		std::map<std::string, Ogre::Light*> mLightList;
 

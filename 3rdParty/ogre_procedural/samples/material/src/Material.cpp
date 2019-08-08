@@ -29,7 +29,8 @@ THE SOFTWARE.
 #include "Material.h"
 #include "Procedural.h"
 #include "ProceduralUtils.h"
-#include "RTShaderSystem/OgreRTShaderSystem.h"
+#include "OgreRTShaderSystem.h"
+#include <iostream>
 
 //-------------------------------------------------------------------------------------
 void Sample_Material::createScene(void)
@@ -102,7 +103,6 @@ void Sample_Material::createScene(void)
 	{
 		Ogre::RTShader::ShaderGenerator* mShaderGenerator = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
 		mShaderGenerator->setShaderCachePath(".");
-		mShaderGenerator->addSceneManager(mSceneMgr);
 		RTShader::RenderState* pMainRenderState = mShaderGenerator->createOrRetrieveRenderState(RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME).first;
 		pMainRenderState->reset();
 
@@ -112,10 +112,7 @@ void Sample_Material::createScene(void)
 		normalMapSubRS->setNormalMapTextureName("proceduralTextureNormal");
 
 		pMainRenderState->addTemplateSubRenderState(normalMapSubRS);
-		mShaderGenerator->createShaderBasedTechnique("proceduralMaterial", Ogre::MaterialManager::DEFAULT_SCHEME_NAME, Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-#if (OGRE_VERSION < ((1 << 16) | (9 << 8) | 0))
-		mCamera->getViewport()->setMaterialScheme(Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-#endif
+		mShaderGenerator->createShaderBasedTechnique(*demoMaterial, Ogre::MaterialManager::DEFAULT_SCHEME_NAME, Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
 	}
 
 	// -- Test plane
@@ -137,11 +134,9 @@ void Sample_Material::createCamera(void)
 //-------------------------------------------------------------------------------------
 bool Sample_Material::frameStarted(const FrameEvent& evt)
 {
-#if (OGRE_VERSION < ((1 << 16) | (9 << 8) | 0))
-	movingLight->setPosition(mCamera->getPosition());
-#else
+    BaseApplication::frameStarted(evt);
 	movingLight->getParentSceneNode()->setPosition(mCamera->getPosition());
-#endif
+
 	return true;
 }
 //-------------------------------------------------------------------------------------

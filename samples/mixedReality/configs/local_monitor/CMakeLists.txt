@@ -27,6 +27,7 @@ set (CONFIGS
 	apeX3DLoaderPlugin.json
 	apeKinectPlugin.json
 	apeCore.json
+	apeAssimpAssetLoaderPlugin.json
 	)
 
 add_custom_target(

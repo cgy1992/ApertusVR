@@ -31,6 +31,7 @@ ape::IndexedFaceSetGeometryImpl::IndexedFaceSetGeometryImpl(std::string name, bo
 	mCoordinatesSize = 0;
 	mIndicesSize = 0;
 	mNormalsSize = 0;
+	mTangentsSize = 0;
 	mColorsSize = 0;
 	mTextureCoordinatesSize = 0;
 }
@@ -40,14 +41,15 @@ ape::IndexedFaceSetGeometryImpl::~IndexedFaceSetGeometryImpl()
 	
 }
 
-void ape::IndexedFaceSetGeometryImpl::setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
+void ape::IndexedFaceSetGeometryImpl::setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
 {
 	mCoordinatesSize = static_cast<int>(coordinates.size());
 	mIndicesSize = static_cast<int>(indices.size());
 	mNormalsSize = static_cast<int>(normals.size());
+	mTangentsSize = static_cast<int>(tangents.size());
 	mColorsSize = static_cast<int>(colors.size());
 	mTextureCoordinatesSize = static_cast<int>(textureCoordinates.size());
-	mParameters = ape::GeometryIndexedFaceSetParameters(groupName, coordinates, indices, normals, generateNormals, colors, textureCoordinates, material);
+	mParameters = ape::GeometryIndexedFaceSetParameters(groupName, coordinates, indices, normals, tangents, generateNormals, colors, textureCoordinates, material);
 	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::GEOMETRY_INDEXEDFACESET_PARAMETERS));
 }
 
@@ -99,6 +101,10 @@ RakNet::RM3SerializationResult ape::IndexedFaceSetGeometryImpl::Serialize(RakNet
 
 		mVariableDeltaSerializer.SerializeVariable(&serializationContext, mNormalsSize);
 		for (auto item : mParameters.normals)
+			mVariableDeltaSerializer.SerializeVariable(&serializationContext, item);
+
+		mVariableDeltaSerializer.SerializeVariable(&serializationContext, mTangentsSize);
+		for (auto item : mParameters.tangents)
 			mVariableDeltaSerializer.SerializeVariable(&serializationContext, item);
 
 		mVariableDeltaSerializer.SerializeVariable(&serializationContext, mParameters.generateNormals);
@@ -158,6 +164,15 @@ void ape::IndexedFaceSetGeometryImpl::Deserialize(RakNet::DeserializeParameters 
 	}
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mParameters.generateNormals))
 		;
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mTangentsSize))
+	{
+		while (mParameters.tangents.size() < mTangentsSize)
+		{
+			float item;
+			if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, item))
+				mParameters.tangents.push_back(item);
+		}
+	}
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mColorsSize))
 	{
 		while (mParameters.colors.size() < mColorsSize)

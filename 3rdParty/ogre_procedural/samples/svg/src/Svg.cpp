@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "Svg.h"
 #include "Procedural.h"
 #include "ProceduralUtils.h"
+#include <iostream>
 
 //-------------------------------------------------------------------------------------
 void Sample_Svg::createScene(void)
@@ -40,7 +41,7 @@ void Sample_Svg::createScene(void)
 
 	Procedural::MultiShape out;
 	Procedural::SvgLoader svg;
-	svg.parseSvgFile(out, "test.svg", "Essential", 16);
+	svg.parseSvgFile(out, "test.svg", "Scripts", 16);
 	Procedural::Extruder().setMultiShapeToExtrude(&out).setExtrusionPath(&p).setScale(.05f).realizeMesh("svg");
 	putMesh2("svg");
 }
@@ -48,15 +49,13 @@ void Sample_Svg::createScene(void)
 void Sample_Svg::createCamera(void)
 {
 	BaseApplication::createCamera();
+	mCameraMan->setYawPitchDist(Degree(90), Degree(45), 2000);
 }
 //-------------------------------------------------------------------------------------
 bool Sample_Svg::frameStarted(const FrameEvent& evt)
 {
-#if OGRE_VERSION < ((2 << 16) | (0 << 8) | 0)
-	movingLight->setPosition(mCamera->getPosition());
-#else
+    BaseApplication::frameStarted(evt);
 	movingLight->getParentSceneNode()->setPosition(mCamera->getPosition());
-#endif
 	return true;
 }
 //-------------------------------------------------------------------------------------

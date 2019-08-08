@@ -35,11 +35,13 @@ namespace ape
 		ape::GeometryCoordinates coordinates;
 		ape::GeometryIndices indices;
 		ape::GeometryNormals normals;
+		ape::GeometryTangents tangents;
 		bool generateNormals;
 		ape::GeometryColors colors;
 		ape::GeometryTextureCoordinates textureCoordinates;
 		ape::MaterialWeakPtr material;
 		std::string materialName;
+		
 		
 		GeometryIndexedFaceSetParameters()
 		{
@@ -52,14 +54,16 @@ namespace ape
 			this->textureCoordinates = ape::GeometryTextureCoordinates();
 			this->material = ape::MaterialWeakPtr();
 			this->materialName = std::string();
+			this->tangents = ape::GeometryTangents();
 		}
 
-		GeometryIndexedFaceSetParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
+		GeometryIndexedFaceSetParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
 		{
 			this->groupName = groupName;
 			this->coordinates = coordinates;
 			this->indices = indices;
 			this->normals = normals;
+			this->tangents = tangents;
 			this->generateNormals = generateNormals;
 			this->colors = colors;
 			this->textureCoordinates = textureCoordinates;
@@ -83,6 +87,11 @@ namespace ape
 		ape::GeometryNormals getNormals()
 		{
 			return normals;
+		}
+
+		ape::GeometryTangents getTangents()
+		{
+			return tangents;
 		}
 
 		ape::GeometryColors getColors()
@@ -111,6 +120,10 @@ namespace ape
 			for (auto const &item : normals) buff << item << ", ";
 			buff << ")" << std::endl;
 
+			buff << "Tangents(";
+			for (auto const &item : tangents) buff << item << ", ";
+			buff << ")" << std::endl;
+
 			buff << "Colors(";
 			for (auto const &item : colors) buff << item << ", ";
 			buff << ")" << std::endl;
@@ -131,7 +144,7 @@ namespace ape
 		virtual ~IIndexedFaceSetGeometry() {};
 		
 	public:
-		virtual void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) = 0;
+		virtual void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) = 0;
 		
 		virtual ape::GeometryIndexedFaceSetParameters getParameters() = 0;
 

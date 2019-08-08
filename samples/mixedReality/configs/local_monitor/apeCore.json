@@ -2,7 +2,8 @@
   "plugins": [
     "apeOgre21RenderPlugin",
     "apeOisUserInputPlugin",
-    "apeIndustry40Plugin"
+    "apeIndustry40Plugin",
+    "apeAssimpAssetLoaderPlugin"
   ],
   "network": {
     "user": "cave",
@@ -24,7 +25,8 @@
     },
     "selected": "none",
     "resourceLocations": [
-      "/macros/sceneMaker/resources"
+      "/macros/sceneMaker/resources",
+      "/plugins/assimpAssetLoader/resources"
     ]
   }
 }
