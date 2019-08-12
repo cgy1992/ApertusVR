@@ -37,7 +37,7 @@ namespace ape
 
 		~IndexedFaceSetGeometryImpl();
 
-		void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) override;
+		void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material , ape::GeometryFaces faces) override;
 
 		ape::GeometryIndexedFaceSetParameters getParameters() override;
 
@@ -51,6 +51,32 @@ namespace ape
 
 		void Deserialize(RakNet::DeserializeParameters *deserializeParameters) override;
 
+		bool getHasNormals() override;
+
+		bool getHasTextureCoords() override;
+
+		bool getHasVertexColors() override;
+
+		void setHasNormals(bool hasnormas) override;
+
+		void setHasTextureCoords(bool hasTC) override;
+
+		void setHasVertexColors(bool hasVC) override;
+
+		void setUvs(ape::Vector3* &Uvs) override;
+
+		ape::Vector3* getUvs() override;
+
+		void setCols(ape::Vector4* &Cols) override;
+
+		ape::Vector4* getCols() override;
+
+		void setIndex(int indx) override;
+
+		int getIndex() override;
+
+		virtual void attachDataBlock() override;
+	
 	private:
 		ape::EventManagerImpl* mpEventManagerImpl;
 
@@ -69,6 +95,18 @@ namespace ape
 		int mColorsSize;
 
 		int mTextureCoordinatesSize;
+
+		bool mHasNormals;
+
+		bool mHasTextureCoords;
+
+		bool mHasVertexColors;
+
+		ape::Vector3* mUvs;
+
+		ape::Vector4* mCols;
+
+		int mIndx;
 	};
 }
 

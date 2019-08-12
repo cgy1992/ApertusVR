@@ -159,7 +159,9 @@ namespace ape
 
 		bool frameEnded(const Ogre::FrameEvent& evt) override;
 
-
+		template <class id_t>
+		Ogre::IndexBufferPacked* inflateIndexBufferPacked(ape::GeometryIndexedFaceSetParameters parameters, Ogre::VaoManager* vaomgr,
+			Ogre::IndexBufferPacked::IndexType typenum, id_t* buffer);
 
 	private:
 		Ogre::Root* mpRoot;
@@ -171,6 +173,8 @@ namespace ape
 		Ogre::CompositorManager2 * mpCompositorManager;
 
 		std::map<std::string, Ogre::Item*> mItemList;
+
+		std::map<std::string, Ogre::MaterialPtr> mMatList;
 
 		std::map<std::string, Ogre::ManualObject*> mManualObjectList;
 

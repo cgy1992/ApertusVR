@@ -102,6 +102,8 @@ namespace ape
 
 		std::mutex mMutex;
 
+		std::map<std::string, aiMatrix4x4> mDerivedTransformsByName;
+
 		void eventCallBack(const ape::Event& event);
 
 		void createNode(int assimpSceneID, aiNode* assimpNode);
@@ -111,6 +113,8 @@ namespace ape
 		void readFile(std::string fileName);
 
 		void loadScene(const aiScene* assimpScene, int ID);
+
+		void computeNodesDerivedTransform(const aiScene* scene, const aiNode *node, const aiMatrix4x4 accTransf);
 	};
 	
 	APE_PLUGIN_FUNC ape::IPlugin* CreateAssimpAssetLoaderPlugin()

@@ -37,7 +37,11 @@ namespace ape
 		PbsMaterialImpl(std::string name, bool isHostCreated);
 
 		~PbsMaterialImpl();
-		
+
+		void setShadingMode(std::string shadingMode) override;
+
+		std::string getShadingMode() override;
+
 		/*void setAlbedo(ape::Color albedo) override;*/
 
 		void setRoughness(float roughness) override;
@@ -60,13 +64,23 @@ namespace ape
 
 		void setSpecularColor(ape::Color specular) override;
 
-		/*void setAmbientColor(ape::Color ambient) override;*/
+		void setAmbientColor(ape::Color ambient) override;
 
 		void setEmissiveColor(ape::Color emissive) override;
 
+		ape::Color getSpecularColor() override;
+
+		ape::Color getAmbientColor() override;
+
 		ape::Color getEmissiveColor() override;
 
-		/*void setShininess(float shininess) override;*/
+		void setPath(std::string path) override;
+
+		std::string getPath() override;
+
+		void setShininess(float shininess) override;
+
+		float getShininess() override;
 
 		virtual void setAlphaMode(std::string alphaMode)override;
 
@@ -102,6 +116,8 @@ namespace ape
 
 		void Deserialize(RakNet::DeserializeParameters *deserializeParameters) override;
 
+
+
 	private:
 		ape::EventManagerImpl* mpEventManagerImpl;
 
@@ -125,6 +141,13 @@ namespace ape
 
 		std::string mNormalTexture;
 
+		std::string mShadingMode;
+
+		ape::Color mAmbientColor;
+
+		float mShininess;
+
+		std::string mPath;
 	};
 }
 

@@ -41,7 +41,7 @@ ape::IndexedFaceSetGeometryImpl::~IndexedFaceSetGeometryImpl()
 	
 }
 
-void ape::IndexedFaceSetGeometryImpl::setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
+void ape::IndexedFaceSetGeometryImpl::setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material, ape::GeometryFaces faces)
 {
 	mCoordinatesSize = static_cast<int>(coordinates.size());
 	mIndicesSize = static_cast<int>(indices.size());
@@ -49,7 +49,7 @@ void ape::IndexedFaceSetGeometryImpl::setParameters(std::string groupName, ape::
 	mTangentsSize = static_cast<int>(tangents.size());
 	mColorsSize = static_cast<int>(colors.size());
 	mTextureCoordinatesSize = static_cast<int>(textureCoordinates.size());
-	mParameters = ape::GeometryIndexedFaceSetParameters(groupName, coordinates, indices, normals, tangents, generateNormals, colors, textureCoordinates, material);
+	mParameters = ape::GeometryIndexedFaceSetParameters(groupName, coordinates, indices, normals, tangents, generateNormals, colors, textureCoordinates, material, faces);
 	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::GEOMETRY_INDEXEDFACESET_PARAMETERS));
 }
 
@@ -73,6 +73,71 @@ void ape::IndexedFaceSetGeometryImpl::setParentNode(ape::NodeWeakPtr parentNode)
 ape::MaterialWeakPtr ape::IndexedFaceSetGeometryImpl::getMaterial()
 {
 	return mParameters.material;
+}
+
+bool ape::IndexedFaceSetGeometryImpl::getHasNormals()
+{
+	return mHasNormals;
+}
+
+bool ape::IndexedFaceSetGeometryImpl::getHasTextureCoords()
+{
+	return mHasTextureCoords;
+}
+
+bool ape::IndexedFaceSetGeometryImpl::getHasVertexColors()
+{
+	return mHasVertexColors;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setHasNormals(bool hasnormas)
+{
+	mHasNormals = hasnormas;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setHasTextureCoords(bool hasTC)
+{
+	mHasTextureCoords = hasTC;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setHasVertexColors(bool hasVC)
+{
+	mHasVertexColors = hasVC;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setUvs(ape::Vector3* &Uvs)
+{
+	mUvs = Uvs;
+}
+
+ape::Vector3* ape::IndexedFaceSetGeometryImpl::getUvs()
+{
+	return mUvs;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setCols(ape::Vector4* &Cols)
+{
+	mCols = Cols;
+}
+
+ape::Vector4* ape::IndexedFaceSetGeometryImpl::getCols()
+{
+	return mCols;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setIndex(int indx)
+{
+	mIndx = indx;
+}
+
+int ape::IndexedFaceSetGeometryImpl::getIndex()
+{
+	return mIndx;
+}
+
+void ape::IndexedFaceSetGeometryImpl::attachDataBlock()
+{
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::GEOMETRY_INDEXEDFACESET_MATERIAL));
 }
 
 void ape::IndexedFaceSetGeometryImpl::WriteAllocationID(RakNet::Connection_RM3 *destinationConnection, RakNet::BitStream *allocationIdBitstream) const

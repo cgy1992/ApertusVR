@@ -169,7 +169,7 @@ void ape::apeOculusDK2Plugin::Init()
 		{
 			if (auto manual = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->createEntity("RiftRenderObjectLeft", ape::Entity::GEOMETRY_INDEXEDFACESET).lock()))
 			{
-				manual->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), false, colors, textureCoordinates, fileMaterialLeftEye);
+				manual->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), false, colors, textureCoordinates, fileMaterialLeftEye,ape::GeometryFaces());
 				manual->setParentNode(meshNode);
 			}
 		}
@@ -177,7 +177,7 @@ void ape::apeOculusDK2Plugin::Init()
 		{
 			if (auto manual = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->createEntity("RiftRenderObjectRight", ape::Entity::GEOMETRY_INDEXEDFACESET).lock()))
 			{
-				manual->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), false, colors, textureCoordinates, fileMaterialRightEye);
+				manual->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), false, colors, textureCoordinates, fileMaterialRightEye, ape::GeometryFaces());
 				manual->setParentNode(meshNode);
 			}
 		}

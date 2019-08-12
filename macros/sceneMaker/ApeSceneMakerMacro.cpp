@@ -292,7 +292,7 @@ void ape::SceneMakerMacro::makeBox(std::string name)
 					1, 5, 6, 2, -1,
 					2, 6, 7, 3, -1,
 					4, 0, 3, 7, -1 };
-				box->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), true, ape::GeometryColors(), ape::GeometryTextureCoordinates(), material);
+				box->setParameters("", coordinates, indices, ape::GeometryNormals(), ape::GeometryTangents(), true, ape::GeometryColors(), ape::GeometryTextureCoordinates(), material, ape::GeometryFaces());
 				box->setParentNode(node);
 			}
 		}

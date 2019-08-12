@@ -54,13 +54,13 @@ void ape::PbsMaterialImpl::setSpecularColor(ape::Color specular)
 	mSpecularColor = specular;
 	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SPECULAR));
 }
-//
-//void ape::PbsMaterialImpl::setAmbientColor(ape::Color ambient) // ninics
-//{
-//	mAmbientColor = ambient;
-//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_AMBIENT));
-//}
-//
+
+void ape::PbsMaterialImpl::setAmbientColor(ape::Color ambient) // ninics
+{
+	mAmbientColor = ambient;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_AMBIENT));
+}
+
 void ape::PbsMaterialImpl::setEmissiveColor(ape::Color emissive) // not color ()
 {
 	mEmissiveColor = emissive;
@@ -117,7 +117,7 @@ std::string ape::PbsMaterialImpl::getBaseColorTexture()
 void ape::PbsMaterialImpl::setNormalTexture(std::string path)
 {
 	mNormalTexture = path;
-	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_NORMAL_TEXTURE));
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_NORMAL_TEXTURE));
 }
 
 std::string ape::PbsMaterialImpl::getNormalTexture()
@@ -125,12 +125,37 @@ std::string ape::PbsMaterialImpl::getNormalTexture()
 	return mNormalTexture;
 }
 
-//void ape::PbsMaterialImpl::setShininess(float shininess) // nincs
-//{
-//	mShininess = shininess;
-//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SHININESS));
-//}
-//
+void ape::PbsMaterialImpl::setShininess(float shininess)
+{
+	mShininess = shininess;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SHININESS));
+}
+
+float ape::PbsMaterialImpl::getShininess()
+{
+	return mShininess;
+}
+
+ape::Color ape::PbsMaterialImpl::getSpecularColor()
+{
+	return mSpecularColor;
+}
+
+ape::Color ape::PbsMaterialImpl::getAmbientColor()
+{
+	return mAmbientColor;
+}
+
+void ape::PbsMaterialImpl::setPath(std::string path)
+{
+	mPath = path;
+}
+
+std::string ape::PbsMaterialImpl::getPath()
+{
+	return mPath;
+}
+
 //void ape::PbsMaterialImpl::setAlbedo(ape::Color albedo) // nincs
 //{
 //	mAlbedo = albedo;
@@ -176,6 +201,18 @@ float ape::PbsMaterialImpl::getRoughness()
 //	return mF0;
 //}
 
+void ape::PbsMaterialImpl::setShadingMode(std::string shadingMode)
+{
+	mShadingMode = shadingMode;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SHADINGMODE));
+}
+
+std::string ape::PbsMaterialImpl::getShadingMode()
+{
+	return mShadingMode;
+}
+
+
 void ape::PbsMaterialImpl::setMetalness(float metalness)
 {
 	mMetalness = metalness;
@@ -198,7 +235,6 @@ float ape::PbsMaterialImpl::getBaseColor()
 }
 
 
-
 void ape::PbsMaterialImpl::WriteAllocationID(RakNet::Connection_RM3 *destinationConnection, RakNet::BitStream *allocationIdBitstream) const
 {
 	allocationIdBitstream->Write(mObjectType);
@@ -210,11 +246,11 @@ RakNet::RM3SerializationResult ape::PbsMaterialImpl::Serialize(RakNet::Serialize
 	RakNet::VariableDeltaSerializer::SerializationContext serializationContext;
 	serializeParameters->pro[0].reliability = RELIABLE_ORDERED;
 	mVariableDeltaSerializer.BeginIdenticalSerialize(&serializationContext, serializeParameters->whenLastSerialized == 0, &serializeParameters->outputBitstream[0]);
-	//mVariableDeltaSerializer.SerializeVariable(&serializationContext, mAmbientColor);
+	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mAmbientColor);
 	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mDiffuseColor);
-	//mVariableDeltaSerializer.SerializeVariable(&serializationContext, mSpecularColor);
-	//mVariableDeltaSerializer.SerializeVariable(&serializationContext, mEmissiveColor);
-	//mVariableDeltaSerializer.SerializeVariable(&serializationContext, mShininess);
+	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mSpecularColor);
+	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mEmissiveColor);
+	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mShininess);
 	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mAlbedo);
 	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mRoughness);
 	mVariableDeltaSerializer.SerializeVariable(&serializationContext, mLightRoughnessOffset);
@@ -227,16 +263,16 @@ void ape::PbsMaterialImpl::Deserialize(RakNet::DeserializeParameters *deserializ
 {
 	RakNet::VariableDeltaSerializer::DeserializationContext deserializationContext;
 	mVariableDeltaSerializer.BeginDeserialize(&deserializationContext, &deserializeParameters->serializationBitstream[0]);
-	//if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mAmbientColor))
-	//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_AMBIENT));
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mAmbientColor))
+		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_AMBIENT));
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mDiffuseColor))
 		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_DIFFUSE));
-	//if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mSpecularColor))
-	//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SPECULAR));
-	//if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mEmissiveColor))
-	//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_EMISSIVE));
-	//if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mShininess))
-	//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SHININESS));
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mSpecularColor))
+		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SPECULAR));
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mEmissiveColor))
+		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_EMISSIVE));
+	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mShininess))
+		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_SHININESS));
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mAlbedo))
 		mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_ALBEDO));
 	if (mVariableDeltaSerializer.DeserializeVariable(&deserializationContext, mRoughness))

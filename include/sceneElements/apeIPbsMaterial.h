@@ -50,6 +50,7 @@ namespace ape
 
 		float mBaseColor;
 
+
 	public:
 		//virtual void setAlbedo(ape::Color albedo) = 0;
 
@@ -67,13 +68,27 @@ namespace ape
 
 		//virtual ape::Color getF0() = 0;
 
+		virtual void setPath(std::string path) = 0;
+
+		virtual std::string getPath() = 0;
+
+		virtual ape::Color getSpecularColor() = 0;
+
+		virtual ape::Color getAmbientColor() = 0;
+
+		virtual void setShadingMode(std::string shadingMode) = 0;
+
+		virtual std::string getShadingMode() = 0;
+
 		virtual void setDiffuseColor(Color diffuse) = 0;
 
 		virtual ape::Color getDiffuseColor() = 0;
 
 		virtual void setSpecularColor(Color specular) = 0;
 
-		//virtual void setAmbientColor(Color ambient) = 0;
+		virtual void setAmbientColor(Color ambient) = 0;
+
+		//virtual void setDiffuse(Color diffuse) = 0;
 
 		virtual void setEmissiveColor(Color emissive) = 0;
 
@@ -100,7 +115,9 @@ namespace ape
 		virtual std::string getNormalTexture() = 0;
 
 
-		//virtual void setShininess(float shininess) = 0;
+		virtual void setShininess(float shininess) = 0;
+
+		virtual float getShininess() = 0;
 
 		virtual void setMetalness(float MetallicRoughness) = 0;
 
@@ -109,6 +126,7 @@ namespace ape
 		virtual void setBaseColor(float MetallicRoughness) = 0;
 
 		virtual float getBaseColor() = 0;
+
 	};
 }
 

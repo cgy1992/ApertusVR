@@ -34,9 +34,17 @@ SOFTWARE.*/
 
 namespace ape
 {
+	struct Faces {
+		std::vector<std::vector<int>> face;
+		std::vector<ape::Vector3> faceVectors;
+	};
+
+
 	typedef std::vector<float> GeometryCoordinates;
 
 	typedef std::vector<int> GeometryIndices;	//-1 code for stop
+
+	typedef Faces GeometryFaces;
 
 	typedef std::vector<float> GeometryNormals;
 

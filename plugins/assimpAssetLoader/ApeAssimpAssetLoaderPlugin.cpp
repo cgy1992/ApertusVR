@@ -109,6 +109,7 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 	escapedNodeName.erase(std::remove(escapedNodeName.begin(), escapedNodeName.end(), '<'), escapedNodeName.end());
 	escapedNodeName.erase(std::remove(escapedNodeName.begin(), escapedNodeName.end(), '>'), escapedNodeName.end());
 	assimpNode->mName = escapedNodeName;
+	computeNodesDerivedTransform(mAssimpScenes[assimpSceneID], mAssimpScenes[assimpSceneID]->mRootNode, mAssimpScenes[assimpSceneID]->mRootNode->mTransformation);
 	if (auto node = mpSceneManager->createNode(escapedNodeName).lock())
 	{
 		auto parentNode = ape::NodeWeakPtr();
@@ -121,22 +122,33 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 		node->setPosition(ape::Vector3(position.x, position.y, position.z));
 		node->setOrientation(ape::Quaternion(rotation.w, rotation.x, rotation.y, rotation.z));
 		node->setScale(ape::Vector3(scaling.x, scaling.y, scaling.z));
+		
 		//APE_LOG_DEBUG("nodeName: " << node->getName());
 		for (int i = 0; i < assimpNode->mNumMeshes; i++)
 		{
+			int indx = i;
 			mObjectCount++;
 			aiMesh* assimpMesh = mAssimpScenes[assimpSceneID]->mMeshes[assimpNode->mMeshes[i]];
 			std::stringstream meshUniqueName;
 			meshUniqueName << assimpNodeOriginalName << "_" << mObjectCount;
 			assimpMesh->mName = meshUniqueName.str();
+
 			if (auto mesh = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->createEntity(meshUniqueName.str(), ape::Entity::GEOMETRY_INDEXEDFACESET).lock()))
 			{
-				
+				const aiMatrix4x4 aiMtransf = mDerivedTransformsByName.find(assimpNode->mName.data)->second;
+				aiMatrix3x3 aiMrot(aiMtransf);
+				ape::GeometryFaces faces = ape::GeometryFaces();
+				faces.faceVectors.resize(assimpMesh->mNumVertices);
 				ape::GeometryCoordinates coordinates = ape::GeometryCoordinates();
 				for (int i = 0; i < assimpMesh->mNumVertices; i++)
 				{
 					aiVector3D assimpVertex = assimpMesh->mVertices[i];
+					aiVector3D assimpVertexTransf = assimpVertex;
+					assimpVertexTransf *= aiMtransf;
 					ape::Vector3 vertexPosition(assimpVertex.x, assimpVertex.y, assimpVertex.z);
+					faces.faceVectors[i].x = assimpVertexTransf.x;
+					faces.faceVectors[i].y = assimpVertexTransf.y;
+					faces.faceVectors[i].z = assimpVertexTransf.z;
 					if (mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 						vertexPosition = (node->getDerivedPosition() + (node->getDerivedOrientation() * vertexPosition)) * mAssimpAssetConfigs[assimpSceneID].scale;
 					coordinates.push_back(vertexPosition.x);
@@ -148,17 +160,80 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 				{
 					aiFace assimpFace = assimpMesh->mFaces[i];
 					for (int i = 0; i < assimpFace.mNumIndices; i++)
-						indices.push_back(assimpFace.mIndices[i]);
+						indices.push_back(assimpFace.mIndices[i]); 
 					indices.push_back(-1);
 				}
-				
-				/*for (int i = 0; i < assimpMesh->mNumFaces; i++)
+
+
+				faces.face.resize(assimpMesh->mNumFaces);
+				for (int i = 0; i < assimpMesh->mNumFaces; i++)
 				{
 					aiFace assimpFace = assimpMesh->mFaces[i];
-					for (int i = 0; i < assimpFace.mNumIndices; i++)
-						indices.push_back(assimpFace.mIndices[i]);
-					indices.push_back(-1);
-				}*/
+					faces.face[i].resize(assimpFace.mNumIndices);
+					for (int j = 0; j < assimpFace.mNumIndices; j++)
+					{
+						
+						faces.face[i][j] = assimpFace.mIndices[j];
+					}
+						
+					//indices.push_back(-1);
+				}
+
+				mesh->setIndex(indx);
+
+				mesh->setHasNormals(assimpMesh->HasNormals());
+
+				mesh->setHasTextureCoords(assimpMesh->HasTextureCoords(0));
+
+				mesh->setHasVertexColors(assimpMesh->HasVertexColors(0));
+				
+
+
+				if (assimpMesh->HasTextureCoords(0))
+				{
+					aiVector3D *uv = assimpMesh->mTextureCoords[0];
+					std::vector<ape::Vector3*> Vec;
+					Vec.resize(assimpMesh->mNumVertices);
+					/*for (int i = 0; i < Vec.size(); i++)
+					{	
+						Vec[i] = new ape::Vector3();
+					}*/
+					ape::Vector3 *apeuv = Vec[0];
+					for (int i = 0; i < assimpMesh->mNumVertices; i++)
+					{
+						Vec[i] = new ape::Vector3(uv[i].x,uv[i].y,0.0f);
+						//apeuv[i].x = uv[i].x;
+						//apeuv[i].y = uv[i].y;
+						//apeuv[i].z = uv[i].z;
+					}
+					//ape::Vector3 *puv = apeuv->[0];
+					apeuv = Vec[0];
+					mesh->setUvs(apeuv);
+				}
+
+
+				
+				if (assimpMesh->HasVertexColors(0))
+				{
+					aiColor4D *col = assimpMesh->mColors[0];
+					std::vector<ape::Vector4*> Col;
+					Col.resize(assimpMesh->mNumVertices);
+					for (int i = 0; i < Col.size(); i++)
+					{
+						Col[i] = new ape::Vector4();
+					}
+					ape::Vector4 *apeCol = Col[0];
+					for (int i = 0; i < assimpMesh->mNumVertices; i++)
+					{
+						apeCol[i].x = col[i].r;
+						apeCol[i].y = col[i].g;
+						apeCol[i].z = col[i].b;
+					}
+					mesh->setCols(apeCol);
+				}
+
+
+
 
 
 
@@ -200,23 +275,19 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughness);	
 					float baseColor = 0.0;
 					//asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor);
-					
-					aiString fileBaseColor, fileMetallicRoughness;
-					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
-					//std::cout <<fileMetallicRoughness.C_Str() << std::endl;
-					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
 					aiString alphaMode;
 					asssimpMaterial->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode);
-					aiString normalTexture;
-					
+
 					
 
-					material->setBaseColorTexture(fileBaseColor.C_Str());
-					material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
+
+
+					//material->setBaseColorTexture(fileBaseColor.C_Str());
+					//material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
 
 					material->setMetalness(metalness);
 					material->setRoughness(roughness);
-					//material->setBaseColor(baseColor);
+					material->setBaseColor(baseColor);
 					material->setAlphaMode(alphaMode.C_Str());
 
 					
@@ -259,69 +330,13 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					material->setBaseColor(baseColor);
 					//APE_LOG_DEBUG("createManualMaterial: " << material->getName());
 				}
-
-				/*
-				auto material = std::static_pointer_cast<ape::IManualMaterial>(mpSceneManager->getEntity(modifiedMaterialName).lock());
-				std::string diffuseTextureFileName = std::string();
-				if (!material)
-				{
-					material = std::static_pointer_cast<ape::IManualMaterial>(mpSceneManager->createEntity(modifiedMaterialName, ape::Entity::MATERIAL_MANUAL).lock());
-					aiColor3D colorDiffuse(0.0f, 0.0f, 0.0f);
-					asssimpMaterial->Get(AI_MATKEY_COLOR_DIFFUSE, colorDiffuse);
-					float opacity = 1.0f;
-					asssimpMaterial->Get(AI_MATKEY_OPACITY, opacity);
-					aiColor3D colorSpecular(0.0f, 0.0f, 0.0f);
-					asssimpMaterial->Get(AI_MATKEY_COLOR_SPECULAR, colorSpecular);
-					aiColor3D colorAmbient(0.0f, 0.0f, 0.0f);
-					asssimpMaterial->Get(AI_MATKEY_COLOR_AMBIENT, colorAmbient);
-					aiColor3D colorEmissive(0.0f, 0.0f, 0.0f);
-					asssimpMaterial->Get(AI_MATKEY_COLOR_EMISSIVE, colorEmissive);
-					aiColor3D colorTransparent(0.0f, 0.0f, 0.0f);
-					asssimpMaterial->Get(AI_MATKEY_COLOR_TRANSPARENT, colorTransparent);
-					int sceneBlendingType = 0;
-					asssimpMaterial->Get(AI_MATKEY_BLEND_FUNC, sceneBlendingType);
-					if (asssimpMaterial->GetTextureCount(aiTextureType_DIFFUSE) > 0) 
-					{
-						aiString path;
-						asssimpMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &path);
-						diffuseTextureFileName = path.data;
-					}
-					if (!colorDiffuse.IsBlack())
-						material->setDiffuseColor(ape::Color(colorDiffuse.r, colorDiffuse.g, colorDiffuse.b, opacity));
-					if (!colorSpecular.IsBlack())
-						material->setSpecularColor(ape::Color(colorSpecular.r, colorSpecular.g, colorSpecular.b, opacity));
-					if (!colorAmbient.IsBlack())
-						material->setAmbientColor(ape::Color(colorAmbient.r, colorAmbient.g, colorAmbient.b));
-					if (!colorEmissive.IsBlack())
-						material->setEmissiveColor(ape::Color(colorEmissive.r, colorEmissive.g, colorEmissive.b));
-
-
-					if (sceneBlendingType == aiBlendMode_Additive)
-					{
-						material->setSceneBlending(ape::Pass::SceneBlendingType::ADD);
-						//APE_LOG_DEBUG("blending ADD: " << opacity);
-					}
-					else if (sceneBlendingType == aiBlendMode_Default)
-					{
-						if (opacity < 0.99)
-						{
-							material->setSceneBlending(ape::Pass::SceneBlendingType::TRANSPARENT_ALPHA);
-							//APE_LOG_DEBUG("blending TRANSPARENT_ALPHA: " << opacity);
-						}
-						else
-						{
-							material->setSceneBlending(ape::Pass::SceneBlendingType::REPLACE);
-							//APE_LOG_DEBUG("blending REPLACE: " << opacity);
-						}
-					}
-					//APE_LOG_DEBUG("createManualMaterial: " << material->getName());
-				}*/
 				ape::GeometryNormals normals = ape::GeometryNormals();
 				if (assimpMesh->HasNormals() && !mAssimpAssetConfigs[assimpSceneID].regenerateNormals)
 				{
 					for (int i = 0; i < assimpMesh->mNumVertices; i++)
 					{
 						aiVector3D assimpNormal = assimpMesh->mNormals[i];
+						assimpNormal *= aiMrot;
 						normals.push_back(assimpNormal.x);
 						normals.push_back(assimpNormal.y);
 						normals.push_back(assimpNormal.z);
@@ -373,15 +388,85 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 				std::string groupName = std::string();
 				if (mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 					groupName = mAssimpAssetConfigs[assimpSceneID].file;
-				mesh->setParameters(groupName, coordinates, indices, normals, tangents, mAssimpAssetConfigs[assimpSceneID].regenerateNormals, colors, textureCoordinates, material);
+				mesh->setParameters(groupName, coordinates, indices, normals, tangents, mAssimpAssetConfigs[assimpSceneID].regenerateNormals, colors, textureCoordinates, material, faces);
 				if (textureCoordinates.size() && diffuseTextureFileName.length())
 				{
 					if (auto fileTexture = std::static_pointer_cast<ape::IFileTexture>(mpSceneManager->createEntity(diffuseTextureFileName, ape::Entity::Type::TEXTURE_FILE).lock()))
 					{
-						fileTexture->setFileName(diffuseTextureFileName);
-//						material->setPassTexture(fileTexture);
+						//fileTexture->setFileName(diffuseTextureFileName);
+						//material->setPassTexture(fileTexture);
 					}
 				}
+				//------ create the material ?
+				std::ostringstream texname;
+				aiString szPath;
+				aiGetMaterialString(asssimpMaterial, AI_MATKEY_TEXTURE_DIFFUSE(0), &szPath);
+
+				aiColor4D clr(1.0f, 1.0f, 1.0f, 1.0);
+				aiGetMaterialColor(asssimpMaterial, AI_MATKEY_COLOR_AMBIENT, &clr);
+				ape::Color ambient = ape::Color(clr.r, clr.g, clr.b);
+				material->setAmbientColor(ambient);
+
+				// diffuse
+				clr = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f);
+				if (AI_SUCCESS == aiGetMaterialColor(asssimpMaterial, AI_MATKEY_COLOR_DIFFUSE, &clr))
+				{
+					ape::Color diffuse = ape::Color(clr.r, clr.g, clr.b, clr.a);
+					material->setDiffuseColor(diffuse);
+				}
+
+				// specular
+				clr = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f);
+				if (AI_SUCCESS == aiGetMaterialColor(asssimpMaterial, AI_MATKEY_COLOR_SPECULAR, &clr))
+				{
+					ape::Color specular = ape::Color(clr.r, clr.g, clr.b, clr.a);
+					material->setSpecularColor(specular);
+				}
+
+				// emissive
+				clr = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f);
+				if (AI_SUCCESS == aiGetMaterialColor(asssimpMaterial, AI_MATKEY_COLOR_EMISSIVE, &clr))
+				{
+					ape::Color emissive = ape::Color(clr.r, clr.g, clr.b);
+					material->setEmissiveColor(emissive);
+				}
+
+				float fShininess;
+				if (AI_SUCCESS == aiGetMaterialFloat(asssimpMaterial, AI_MATKEY_SHININESS, &fShininess))
+				{
+					material->setShininess(fShininess);
+				}
+
+				int shade = aiShadingMode_NoShading;
+				if (AI_SUCCESS == asssimpMaterial->Get(AI_MATKEY_SHADING_MODEL, shade) && shade != aiShadingMode_NoShading)
+				{
+					switch (shade) {
+					case aiShadingMode_Phong: // Phong shading mode was added to opengl and directx years ago to be ready for gpus to support it (in fixed function pipeline), but no gpus ever did, so it has never done anything. From directx 10 onwards it was removed again.
+					case aiShadingMode_Gouraud:
+						material->setShadingMode("SO_GOURAUD");
+						break;
+					case aiShadingMode_Flat:
+						material->setShadingMode("SO_FLAT");
+						break;
+					default:
+						break;
+					}
+				}
+
+				//------
+
+				aiString fileBaseColor, fileMetallicRoughness;
+				asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
+				//std::cout <<fileMetallicRoughness.C_Str() << std::endl;
+				asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
+				
+				enum aiTextureType type = aiTextureType_DIFFUSE;
+				aiString path;
+				asssimpMaterial->GetTexture(type, 0, &path);
+				material->setPath(path.C_Str());
+				material->setBaseColorTexture(fileBaseColor.C_Str());
+				material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
+				mesh->attachDataBlock();
 				if (!mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 					mesh->setParentNode(node);
 				APE_LOG_DEBUG("createIndexedFaceSetGeometry: " << mesh->getName());
@@ -552,4 +637,17 @@ void ape::AssimpAssetLoaderPlugin::loadScene(const aiScene* assimpScene, int ID)
 		}
 	}
 	APE_LOG_FUNC_LEAVE();
+}
+
+void ape::AssimpAssetLoaderPlugin::computeNodesDerivedTransform(const aiScene* scene, const aiNode *node, const aiMatrix4x4 accTransf)
+{
+	if (mDerivedTransformsByName.find(node->mName.data) == mDerivedTransformsByName.end())
+	{
+		mDerivedTransformsByName[node->mName.data] = accTransf;
+	}
+	for (unsigned int childIdx = 0; childIdx < node->mNumChildren; ++childIdx)
+	{
+		const aiNode *pChildNode = node->mChildren[childIdx];
+		computeNodesDerivedTransform(scene, pChildNode, accTransf * pChildNode->mTransformation);
+	}
 }

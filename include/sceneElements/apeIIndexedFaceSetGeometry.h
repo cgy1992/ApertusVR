@@ -41,7 +41,7 @@ namespace ape
 		ape::GeometryTextureCoordinates textureCoordinates;
 		ape::MaterialWeakPtr material;
 		std::string materialName;
-		
+		ape::GeometryFaces faces;
 		
 		GeometryIndexedFaceSetParameters()
 		{
@@ -55,9 +55,10 @@ namespace ape
 			this->material = ape::MaterialWeakPtr();
 			this->materialName = std::string();
 			this->tangents = ape::GeometryTangents();
+			this->faces = ape::GeometryFaces();
 		}
 
-		GeometryIndexedFaceSetParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material)
+		GeometryIndexedFaceSetParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material , ape::GeometryFaces faces)
 		{
 			this->groupName = groupName;
 			this->coordinates = coordinates;
@@ -72,6 +73,7 @@ namespace ape
 				this->materialName = materialPtr->getName();
 			else
 				this->materialName = std::string();
+			this->faces = faces;
 		}
 
 		ape::GeometryCoordinates getCoordinates()
@@ -102,6 +104,11 @@ namespace ape
 		ape::GeometryTextureCoordinates getTextureCoordinates()
 		{
 			return textureCoordinates;
+		}
+
+		ape::GeometryFaces getFaces()
+		{
+			return faces;
 		}
 
 		std::string toString() const
@@ -144,13 +151,39 @@ namespace ape
 		virtual ~IIndexedFaceSetGeometry() {};
 		
 	public:
-		virtual void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material) = 0;
+		virtual void setParameters(std::string groupName, ape::GeometryCoordinates coordinates, ape::GeometryIndices indices, ape::GeometryNormals normals, ape::GeometryTangents tangents, bool generateNormals, ape::GeometryColors colors, ape::GeometryTextureCoordinates textureCoordinates, ape::MaterialWeakPtr material , ape::GeometryFaces faces) = 0;
 		
 		virtual ape::GeometryIndexedFaceSetParameters getParameters() = 0;
 
 		virtual void setParentNode(ape::NodeWeakPtr parentNode) = 0;
 
 		virtual ape::MaterialWeakPtr getMaterial() = 0;
+
+		virtual bool getHasNormals() = 0;
+
+		virtual bool getHasTextureCoords() = 0;
+
+		virtual bool getHasVertexColors() = 0;
+
+		virtual void setHasNormals(bool hasnormas) = 0;
+
+		virtual void setHasTextureCoords(bool hasTC) = 0;
+
+		virtual void setHasVertexColors(bool hasVC) = 0;
+
+		virtual void setUvs(ape::Vector3* &Uvs) = 0;
+
+		virtual ape::Vector3* getUvs() = 0;
+
+		virtual void setCols(ape::Vector4* &s) = 0;
+
+		virtual ape::Vector4* getCols() = 0;
+
+		virtual void setIndex(int indx) = 0;
+
+		virtual int getIndex() = 0;
+
+		virtual void attachDataBlock() = 0;
 	};
 }
 
