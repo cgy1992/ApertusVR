@@ -105,12 +105,12 @@ void ape::IndexedFaceSetGeometryImpl::setHasVertexColors(bool hasVC)
 	mHasVertexColors = hasVC;
 }
 
-void ape::IndexedFaceSetGeometryImpl::setUvs(ape::Vector3* &Uvs)
+void ape::IndexedFaceSetGeometryImpl::setUvs(std::vector<ape::Vector3> &Uvs)
 {
 	mUvs = Uvs;
 }
 
-ape::Vector3* ape::IndexedFaceSetGeometryImpl::getUvs()
+std::vector<ape::Vector3> ape::IndexedFaceSetGeometryImpl::getUvs()
 {
 	return mUvs;
 }
@@ -133,6 +133,16 @@ void ape::IndexedFaceSetGeometryImpl::setIndex(int indx)
 int ape::IndexedFaceSetGeometryImpl::getIndex()
 {
 	return mIndx;
+}
+
+bool ape::IndexedFaceSetGeometryImpl::getHasTangents()
+{
+	return mHasTangents;
+}
+
+void ape::IndexedFaceSetGeometryImpl::setHasTangents(bool hastangents)
+{
+	mHasTangents = hastangents;
 }
 
 void ape::IndexedFaceSetGeometryImpl::attachDataBlock()

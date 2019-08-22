@@ -102,6 +102,10 @@ namespace ape
 	{
 		return Ogre::ColourValue(p_colv.r, p_colv.g, p_colv.b, p_colv.a);
 	}
+	inline Ogre::Vector3 ConversionToOgre21_SCPECULAR(const ape::Color& p_colv)
+	{
+		return Ogre::Vector3(p_colv.r, p_colv.g, p_colv.b);
+	}
 
 	inline Ogre::Vector3 ConversionToOgre21_Alfaless(const ape::Color& p_colv)
 	{

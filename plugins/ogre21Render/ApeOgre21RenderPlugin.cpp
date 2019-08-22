@@ -428,7 +428,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				{
 				case ape::Event::Type::LIGHT_CREATE:
 				{
- 					Ogre::Light* ogreLight = mpSceneMgr->createLight();
+ 					ogreLight = mpSceneMgr->createLight();
 					ogreLight->setName(light->getName());
 					mLightList[light->getName()] = ogreLight;
 					Ogre::SceneNode* lightNode = mpSceneMgr->getRootSceneNode(Ogre::SCENE_DYNAMIC)->createChildSceneNode(Ogre::SCENE_DYNAMIC);
@@ -902,6 +902,16 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				std::string parentNodeName = "";
 				if (auto parentNode = manual->getParentNode().lock())
 					parentNodeName = parentNode->getName();
+				Ogre::MeshPtr pmeshv2;
+				if (mMeshPtrList[geometryName])
+				{
+					pmeshv2 = mMeshPtrList[geometryName];
+				}else
+				{
+					pmeshv2 = Ogre::MeshManager::getSingleton().createManual(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+					mMeshPtrList[geometryName] = pmeshv2;
+				}
+
 				switch (event.type)
 				{
 				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_CREATE:
@@ -931,6 +941,14 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 								ogreParentNode->attachObject(ogreItem);					
 						}
 					}
+					else if (mMeshPtrList[geometryName])
+					{
+						auto item = mpSceneMgr->createItem(pmeshv2);
+						mItemList[geometryName] = item;
+						auto parentList = mpSceneMgr->findSceneNodes(parentNodeName);
+						if (auto ogreParentNode = parentList[0])
+							ogreParentNode->attachObject(item);
+					}
 				}
 				break;
 				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_DELETE:
@@ -938,18 +956,29 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					break;
 				case ape::Event::Type::GEOMETRY_INDEXEDFACESET_MATERIAL:
 				{
+					if (!mItemList[geometryName])
+					{
+						auto item = mpSceneMgr->createItem(pmeshv2);
+						mItemList[geometryName] = item;
+					}
 					if (auto ogreItem = mItemList[geometryName])
 					{
 						if (auto material = manual->getMaterial().lock())
 						{
-							auto ogreMaterial = mpRoot->getHlmsManager()->getDatablock(material->getName());
+							//Ogre::HlmsPbsDatablock ogreMaterial = mpRoot->getHlmsManager()->getDatablock(material->getName());
+							Ogre::HlmsPbsDatablock* ogreMaterial = mPbsDataBlockList[material->getName()];
 							//ogreItem->setDatablock(ogreMaterial);
+							auto till = ogreItem->getNumSubItems();
 
-							//--
-							ogreItem->setMaterial(mMatList[material->getName()]);
-							//--
-							//auto ogreMaterial = Ogre::MaterialManager::getSingleton().getByName(material->getName());
-							//ogreItem->setMaterial(ogreMaterial);
+							for (size_t i = 0; i < till; i++)
+							{
+								ogreItem->getSubItem(i)->setDatablock(ogreMaterial);
+								mItemList["Cube_d.mesh"]->setDatablock("Rocks");
+								mItemList["Sphere1000.mesh"]->setDatablock("Rocks");
+							}
+							
+
+						
 						}	
 					}
 				}
@@ -965,62 +994,79 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					{
 						numreal += 3;
 						velements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_NORMAL));
+					}if (manual->getHasTangents())
+					{
+						numreal += 3;
+						velements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_TANGENT));
 					}
 					if (manual->getHasTextureCoords()) 
 					{
-						numreal += 2;
-						velements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT2, Ogre::VES_TEXTURE_COORDINATES));
+						numreal += 3;
+						velements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_TEXTURE_COORDINATES));
 					}
 					if (manual->getHasVertexColors()) 
 					{
 						numreal += 3;
 						velements.push_back(Ogre::VertexElement2(Ogre::VET_FLOAT3, Ogre::VES_DIFFUSE));
 					}
-					parameters.faces.faceVectors.size();
+					//parameters.faces.faceVectors.size();
 					Ogre::Real *vertexdata = reinterpret_cast<Ogre::Real *> (OGRE_MALLOC_SIMD(
 						sizeof(Ogre::Real) * numreal * parameters.faces.faceVectors.size(), Ogre::MEMCATEGORY_GEOMETRY));
 					Ogre::FreeOnDestructor vdataPtr(vertexdata);
 					// fill vertexdata manually
 					// prime pointers to vertex related data
-					//aiVector3D *vec = mesh->mVertices;
-					//aiVector3D *norm = mesh->mNormals;
-					ape::Vector3 *uv = manual->getUvs();
+
+					std::vector<ape::Vector3> uvvec = manual->getUvs();
+					//ape::Vector3 *uv = uvvec[0];
 					ape::Vector4 *col = manual->getCols();
-					//const aiMatrix4x4 aiMtransf = mDerivedTransformsByName.find(node->mName.data)->second;
-					//aiMatrix3x3 aiMrot(aiMtransf);
+
 					ape::Vector3 vect3 = parameters.faces.faceVectors[0];
-					//vect3 *= aiMtransf; // apply transformation
 					Ogre::Aabb subAABB(Ogre::Vector3(vect3.x, vect3.y, vect3.z), Ogre::Vector3::ZERO);
 					int normalhelper = 0;
+					int tangenthelper = 0;
+					int cordHelp = 0;
 					for (unsigned int i = 0, offset = 0; i < parameters.faces.faceVectors.size(); ++i)
 					{
 						// position
 						vect3 = parameters.faces.faceVectors[i];
-						//vect3 *= aiMtransf; // apply transformation
 						vertexdata[offset + 0] = vect3.x;
 						vertexdata[offset + 1] = vect3.y;
 						vertexdata[offset + 2] = vect3.z;
+						//vertexdata[offset + 0] = parameters.coordinates[cordHelp + 0];
+						//vertexdata[offset + 1] = parameters.coordinates[cordHelp + 1];
+						//vertexdata[offset + 2] = parameters.coordinates[cordHelp + 2];
+						
 						offset += 3;
 						subAABB.merge(Ogre::Vector3(vect3.x, vect3.y, vect3.z));
-
+						//subAABB.merge(Ogre::Vector3(parameters.coordinates[cordHelp + 0], parameters.coordinates[cordHelp + 1], parameters.coordinates[cordHelp + 2]));
+						cordHelp += 3;
 						// normal
 						if (manual->getHasNormals())
 						{
 							
-							//vect3 = parameters.normals;
-							//vect3 *= aiMrot; // apply rotation
 							vertexdata[offset + 0] = parameters.normals[normalhelper + 0];
 							vertexdata[offset + 1] = parameters.normals[normalhelper + 1];
 							vertexdata[offset + 2] = parameters.normals[normalhelper + 2];
 							offset += 3;
 							normalhelper += 3;
 						}
+						//tangent
+						if (manual->getHasTangents())
+						{
+							vertexdata[offset + 0] = parameters.tangents[tangenthelper + 0];
+							vertexdata[offset + 1] = parameters.tangents[tangenthelper + 1];
+							vertexdata[offset + 2] = parameters.tangents[tangenthelper + 2];
+							offset += 3;
+							tangenthelper += 3;
+						}
+
 						// uv
 						if (manual->getHasTextureCoords())
 						{
-							vertexdata[offset + 0] = uv[i].x;
-							vertexdata[offset + 1] = uv[i].y;
-							offset += 2;
+							vertexdata[offset + 0] = uvvec[i].x;
+							vertexdata[offset + 1] = uvvec[i].y;
+							vertexdata[offset + 2] = uvvec[i].z;
+							offset += 3;
 						}
 						// color
 						if (manual->getHasVertexColors())
@@ -1030,6 +1076,8 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 							vertexdata[offset + 2] = col[i].z;//b
 							offset += 3;
 						}
+						
+						
 					}
 
 					Ogre::VertexBufferPacked *vertexBuffer = 0;
@@ -1052,26 +1100,42 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 						throw e;
 					}
 					//We'll just use one vertex buffer source (multi-source not working yet)
+
 					Ogre::VertexBufferPackedVec vertexBuffers;
 					vertexBuffers.push_back(vertexBuffer);
 
-					Ogre::IndexBufferPacked *indexBuffer = 0;
-					if (parameters.faces.faceVectors.size() > 65535) // need 32-bit unsigned integer
+					// currently consider 16-bit indices array only
+					Ogre::uint16 * indexdata = reinterpret_cast<Ogre::uint16 *>(OGRE_MALLOC_SIMD(
+						sizeof(Ogre::uint16) * 3 * parameters.faces.face.size(), Ogre::MEMCATEGORY_GEOMETRY));
+					Ogre::FreeOnDestructor iddataPtr(indexdata);
+
+					for (unsigned int i = 0, offset = 0; i < parameters.indices.size()/3; ++i)
 					{
-						Ogre::uint32* indexdatabuf = 0;
-						indexBuffer = inflateIndexBufferPacked(parameters, vaoManager, Ogre::IndexBufferPacked::IT_32BIT, indexdatabuf);
-					}
-					else
-					{
-						Ogre::uint16* indexdatabuf = 0;
-						indexBuffer = inflateIndexBufferPacked(parameters, vaoManager, Ogre::IndexBufferPacked::IT_16BIT, indexdatabuf);
+						indexdata[offset + 0] = (Ogre::uint16)parameters.indices[offset + 0];
+						indexdata[offset + 1] = (Ogre::uint16)parameters.indices[offset + 1];
+						indexdata[offset + 2] = (Ogre::uint16)parameters.indices[offset + 2];
+						offset += 3;
 					}
 
-					if (indexBuffer == 0)
+					Ogre::IndexBufferPacked *indexBuffer = 0;
+					try
 					{
-						Ogre::LogManager::getSingleton().logMessage("Creating hardware index buffer failed.");
+						indexBuffer = vaoManager->createIndexBuffer(Ogre::IndexBufferPacked::IT_16BIT,
+							3 * parameters.indices.size()/3, // number of indices
+							Ogre::BT_IMMUTABLE,
+							indexdata, false);
 					}
-					Ogre::MeshPtr pmeshv2 = Ogre::MeshManager::getSingleton().createManual(geometryName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+					catch (Ogre::Exception &e)
+					{
+						// When keepAsShadow = true, the memory will be freed when the index buffer is destroyed.
+						// However if for some weird reason there is an exception raised, the memory will
+						// not be freed, so it is up to us to do so.
+						// The reasons for exceptions are very rare. But we're doing this for correctness.
+						OGRE_FREE_SIMD(indexBuffer, Ogre::MEMCATEGORY_GEOMETRY);
+						indexBuffer = 0;
+						throw e;
+					}
+					
 					Ogre::SubMesh * submesh = pmeshv2->createSubMesh(manual->getIndex());
 					Ogre::VertexArrayObject *vao = vaoManager->createVertexArrayObject(
 						vertexBuffers, indexBuffer, Ogre::OT_TRIANGLE_LIST);
@@ -1081,7 +1145,6 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					submesh->mVao[Ogre::VpNormal].push_back(vao);
 					//Use the same geometry for shadow casting.
 					submesh->mVao[Ogre::VpShadow].push_back(vao);
-
 					// AABB
 					if (pmeshv2->getNumSubMeshes() > 0) // not first
 					{
@@ -1089,19 +1152,6 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					}
 					pmeshv2->_setBounds(subAABB, false); // merging AABB from all sub-meshes, pad need to be FALSE
 					pmeshv2->_setBoundingSphereRadius(subAABB.getRadius());
-
-
-					/*auto material = manual->getMaterial().lock();
-					
-					auto ogreMaterial = mpRoot->getHlmsManager()->getDatablock(material->getName());*/
-					
-						
-
-					auto item = mpSceneMgr->createItem(pmeshv2);
-					mItemList[geometryName] = item;
-					//item->setDatablock(ogreMaterial);
-					//mpSceneMgr->getRootSceneNode()->createChildSceneNode()->attachObject(item);
-
 				}
 				break;
 				}
@@ -1230,13 +1280,13 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 		{
 			//--
 				//**********
-			Ogre::String basename;
+			/*Ogre::String basename;
 			basename = materialPbs->getName();
 			Ogre::MaterialManager* omatMgr = Ogre::MaterialManager::getSingletonPtr();
 			Ogre::ResourceManager::ResourceCreateOrRetrieveResult status = omatMgr->createOrRetrieve(basename, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 			
 			Ogre::MaterialPtr omat = status.first.staticCast<Ogre::Material>();
-			mMatList[basename] = omat;
+			mMatList[basename] = omat;*/
 
 			//omat->setAmbient(clr.r, clr.g, clr.b);
 
@@ -1249,9 +1299,9 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 			{
 				datablock = static_cast<Ogre::HlmsPbsDatablock*>(HlmsPbs->createDatablock(Ogre::IdString(materialName),
 								materialName,
-								Ogre::HlmsMacroblock{},
-								Ogre::HlmsBlendblock{},
-								Ogre::HlmsParamVec{}));
+								Ogre::HlmsMacroblock(),
+								Ogre::HlmsBlendblock(),
+								Ogre::HlmsParamVec()));
 				datablock->setWorkflow(Ogre::HlmsPbsDatablock::Workflows::MetallicWorkflow);
 				mPbsDataBlockList[materialName] = datablock;
 			}
@@ -1271,49 +1321,50 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				break;
 			case ape::Event::Type::MATERIAL_PBS_DIFFUSE: //base color + alfa
 			{
-				/**datablock->setDiffuse(ConversionToOgre21_Alfaless(materialPbs->getDiffuseColor()));
+				datablock->setDiffuse(ConversionToOgre21_Alfaless(materialPbs->getDiffuseColor()));
 				float alpha = (ConversionToOgre21_Alfa(materialPbs->getDiffuseColor()));
 				auto transparentMode = (alpha == 1) ? Ogre::HlmsPbsDatablock::None : Ogre::HlmsPbsDatablock::Transparent;
-				datablock->setTransparency(alpha, transparentMode);*/
-				ape::Color clr = materialPbs->getDiffuseColor();
-				omat->setDiffuse(clr.r, clr.g, clr.b,clr.a);
+				datablock->setTransparency(alpha, transparentMode);
+				/*ape::Color clr = materialPbs->getDiffuseColor();
+				omat->setDiffuse(clr.r, clr.g, clr.b,clr.a);*/
 
 			}
 				
 				break;
 			case ape::Event::Type::MATERIAL_PBS_SPECULAR:
 			{
-				ape::Color clr = materialPbs->getSpecularColor();
-				omat->setSpecular(clr.r, clr.g, clr.b, clr.a);
+				/*ape::Color clr = materialPbs->getSpecularColor();
+				omat->setSpecular(clr.r, clr.g, clr.b, clr.a);*/
+				datablock->setSpecular(ConversionToOgre21_SCPECULAR(materialPbs->getSpecularColor()));
 			}
 				break;
 			case ape::Event::Type::MATERIAL_PBS_AMBIENT:
 			{
-				ape::Color clr = materialPbs->getAmbientColor();
-				omat->setAmbient(clr.r, clr.g, clr.b);
+				/*ape::Color clr = materialPbs->getAmbientColor();
+				omat->setAmbient(clr.r, clr.g, clr.b);*/
 			}
 				break;
 			case ape::Event::Type::MATERIAL_PBS_SHADINGMODE:
 			{
-				if (materialPbs->getShadingMode() == "SO_GOURAUD")
+				/*if (materialPbs->getShadingMode() == "SO_GOURAUD")
 				{
 					omat->setShadingMode(Ogre::SO_GOURAUD);
 				}
 				else if (materialPbs->getShadingMode() == "SO_FLAT")
 				{
 					omat->setShadingMode(Ogre::SO_FLAT);
-				}
+				}*/
 			}
 				break;
 			case ape::Event::Type::MATERIAL_PBS_SHININESS:
 			{
-				omat->setShininess(Ogre::Real(materialPbs->getShininess()));
+				//omat->setShininess(Ogre::Real(materialPbs->getShininess()));
 			}
 			case ape::Event::Type::MATERIAL_PBS_EMISSIVE:
 			{
-				ape::Color clr = materialPbs->getEmissiveColor();
-				omat->setSelfIllumination(clr.r, clr.g, clr.b);
-				//datablock->setEmissive(ConversionToOgre21_Alfaless(materialPbs->getEmissiveColor()));
+				/*ape::Color clr = materialPbs->getEmissiveColor();
+				omat->setSelfIllumination(clr.r, clr.g, clr.b);*/
+				datablock->setEmissive(ConversionToOgre21_Alfaless(materialPbs->getEmissiveColor()));
 			}
 				break;
 			case ape::Event::Type::MATERIAL_PBS_ALPHAMODE:
@@ -1338,7 +1389,7 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				datablock->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE, 0, texptr);*/
 
 
-				static Ogre::uint8 s_RGB[] = { 128, 0, 255, 128, 0, 255, 128, 0, 255, 128, 0, 255 };
+				/*static Ogre::uint8 s_RGB[] = { 128, 0, 255, 128, 0, 255, 128, 0, 255, 128, 0, 255 };
 				// attempt to load the image
 				Ogre::Image image;
 				std::string path = materialPbs->getBaseColorTexture();
@@ -1380,9 +1431,71 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 
 				// Ogre::TextureManager::getSingleton().loadImage(Ogre::String(szPath.data), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, image);
 				//TODO: save this to materials/textures ?
-				Ogre::TextureUnitState* texUnitState = omat->getTechnique(0)->getPass(0)->createTextureUnitState(basename);
+				//Ogre::TextureUnitState* texUnitState = omat->getTechnique(0)->getPass(0)->createTextureUnitState(basename);
+				
+				const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+				const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
+				bool isHardwareGammaEnabled;
+				if (renderSystemGammaConversionConfigOption.currentValue != "Yes")
+				{
+					isHardwareGammaEnabled = true;
+				}
+				else
+				{
+					isHardwareGammaEnabled = false;
+				}
+				const auto pixelFormat = [&] {
+					if (!(image.getHasAlpha())) return Ogre::PF_BYTE_RGB;
+					if (image.getHasAlpha()) return Ogre::PF_BYTE_RGBA;
+				}();
+				Ogre::TexturePtr BaseTex = mpRoot->getTextureManager()->createManual(materialPbs->getMetallicRoughnessTexture(),
+					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+					Ogre::TextureType::TEX_TYPE_2D_ARRAY, image.getWidth(),
+					image.getHeight(),
+					1,
+					1,
+					pixelFormat,
+					Ogre::TU_DEFAULT,
+					nullptr,
+					isHardwareGammaEnabled);*/
 
 
+				Ogre::Image img = Ogre::Image();
+				img.load(materialPbs->getBaseColorTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				//Ogre::TexturePtr metalTex = mpRoot->getTextureManager()->loadImage(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, img);
+
+				const auto pixelFormat = [&] {
+					if (!(img.getHasAlpha())) return Ogre::PF_BYTE_RGB;
+					if (img.getHasAlpha()) return Ogre::PF_BYTE_RGBA;
+				}();
+
+				const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+				bool isHardwareGammaEnabled;
+				const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
+				if (renderSystemGammaConversionConfigOption.currentValue != "Yes")
+				{
+					isHardwareGammaEnabled = true;
+				}
+				else
+				{
+					isHardwareGammaEnabled = false;
+				}
+
+
+
+				Ogre::TexturePtr BaseTex = mpRoot->getTextureManager()->createManual(materialPbs->getMetallicRoughnessTexture(),
+					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+					Ogre::TextureType::TEX_TYPE_2D_ARRAY, img.getWidth(),
+					img.getHeight(),
+					1,
+					1,
+					pixelFormat,
+					Ogre::TU_DEFAULT,
+					nullptr,
+					isHardwareGammaEnabled);
+				
+				BaseTex->loadImage(img);
+				datablock->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE, 0, BaseTex);
 			}
 			break;
 			case ape::Event::Type::MATERIAL_PBS_METALLICROUGHNESS_TEXTURE:
@@ -1425,19 +1538,13 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 				if (metalTex)
 				{
 					//OgreLog("metalness greyscale texture extracted by textureImporter : " + metalTexure->getName());
-					datablock->setTexture(Ogre::PBSM_METALLIC, 0, metalTex);
+					datablock->setTexture(Ogre::PbsTextureTypes::PBSM_METALLIC, 0, metalTex);
 				}
-
-				/*if (roughTexure)
-				{
-					//OgreLog("roughness geyscale texture extracted by textureImporter : " + roughTexure->getName());
-					datablock->setTexture(Ogre::PBSM_ROUGHNESS, 0, roughTexure);
-				}*/
 			}
 			break;
 			case ape::Event::Type::MATERIAL_PBS_BASECOLOR:
 			{
-
+				//datablock->setFresnel(ConversionToOgre21_Alfaless(materialPbs->getF0()),false);
 			}
 			break;
 			case ape::Event::Type::MATERIAL_PBS_METALNESS:
@@ -1452,15 +1559,95 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 			break; 
 			case ape::Event::Type::MATERIAL_PBS_NORMAL_TEXTURE:
 			{
+				Ogre::Image img = Ogre::Image();
+				img.load(materialPbs->getNormalTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				//Ogre::TexturePtr metalTex = mpRoot->getTextureManager()->loadImage(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, img);
+
+				const auto pixelFormat = [&] {
+					if (!(img.getHasAlpha())) return Ogre::PF_BYTE_RGB;
+					if (img.getHasAlpha()) return Ogre::PF_BYTE_RGBA;
+				}();
+
+				const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+				bool isHardwareGammaEnabled;
+				const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
+				if (renderSystemGammaConversionConfigOption.currentValue != "Yes")
+				{
+					isHardwareGammaEnabled = true;
+				}
+				else
+				{
+					isHardwareGammaEnabled = false;
+				}
+
+				
+				//auto BaseTex = mpRoot->getTextureManager()->create(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, Ogre::TextureType::TEX_TYPE_2D_ARRAY);
+				Ogre::TexturePtr BaseTex = mpRoot->getTextureManager()->createManual(materialPbs->getMetallicRoughnessTexture(),
+					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+					Ogre::TextureType::TEX_TYPE_2D_ARRAY, img.getWidth(),
+					img.getHeight(),
+					1,
+					1,
+					pixelFormat,
+					Ogre::TU_DEFAULT,
+					nullptr,
+					isHardwareGammaEnabled);
+////--
+//				Ogre::HlmsTextureManager::TextureLocation texLocation =
+//					mpRoot->getHlmsManager()->getTextureManager()->createOrRetrieveTexture(materialPbs->getBaseColorTexture(), materialPbs->getBaseColorTexture(), Ogre::HlmsTextureManager::TEXTURE_TYPE_DIFFUSE);
+//				
+//				texLocation.texture = BaseTex;
+//
+//
+////--
+				BaseTex->loadImage(img);
+				BaseTex->load();
+				datablock->setTexture(Ogre::PbsTextureTypes::PBSM_DIFFUSE,0 , BaseTex);
+			}
+			break;
+			case ape::Event::Type::MATERIAL_PBS_EMISSIVE_TEXTURE:
+			{
+				Ogre::Image img = Ogre::Image();
+				img.load(materialPbs->getEmissiveTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+				//Ogre::TexturePtr metalTex = mpRoot->getTextureManager()->loadImage(materialPbs->getMetallicRoughnessTexture(), Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, img);
+
+				const auto pixelFormat = [&] {
+					if (!(img.getHasAlpha())) return Ogre::PF_BYTE_RGB;
+					if (img.getHasAlpha()) return Ogre::PF_BYTE_RGBA;
+				}();
+
+				const auto renderSystem = Ogre::Root::getSingleton().getRenderSystem();
+				bool isHardwareGammaEnabled;
+				const auto renderSystemGammaConversionConfigOption = renderSystem->getConfigOptions().at("sRGB Gamma Conversion");
+				if (renderSystemGammaConversionConfigOption.currentValue != "Yes")
+				{
+					isHardwareGammaEnabled = true;
+				}
+				else
+				{
+					isHardwareGammaEnabled = false;
+				}
+
+
+
+				Ogre::TexturePtr EmissiveTex = mpRoot->getTextureManager()->createManual(materialPbs->getMetallicRoughnessTexture(),
+					Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+					Ogre::TextureType::TEX_TYPE_2D_ARRAY, img.getWidth(),
+					img.getHeight(),
+					1,
+					1,
+					pixelFormat,
+					Ogre::TU_DEFAULT,
+					nullptr,
+					isHardwareGammaEnabled);
+
+				EmissiveTex->loadImage(img);
+
+				datablock->setTexture(Ogre::PbsTextureTypes::PBSM_EMISSIVE, 0, EmissiveTex);
 				
 			}
 			break;
-			/*case ape::Event::Type::MATERIAL_PBS_PASS:
-			{
-
-			}
-			break;
-			case ape::Event::Type::MATERIAL_PBS_TEXTURE:
+			/*case ape::Event::Type::MATERIAL_PBS_TEXTURE:
 			{
 
 			}
@@ -2451,7 +2638,7 @@ void ape::Ogre21RenderPlugin::Init()
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
@@ -2475,9 +2662,6 @@ void ape::Ogre21RenderPlugin::Init()
 
 	mpRoot->getRenderSystem()->setConfigOption("sRGB Gamma Conversion", "Yes");
 	mpRoot->initialise(false, "ape");
-
-	mpHlmsPbsManager = mpRoot->getHlmsManager();
-
 
 	Ogre::InstancingThreadedCullingMethod instancingThreadedCullingMethod = Ogre::INSTANCING_CULLING_SINGLETHREAD; //-> új miatt
 
@@ -2557,6 +2741,102 @@ void ape::Ogre21RenderPlugin::Init()
 	// Initialise, parse scripts etc
 	Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups(true);
 
+
+	//------makessome ground
+	
+
+
+
+	Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane("Plane v1",
+		Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+		Ogre::Plane(Ogre::Vector3::UNIT_Y, 10.0f), 500.0f, 500.0f,
+		1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
+		Ogre::v1::HardwareBuffer::HBU_STATIC,
+		Ogre::v1::HardwareBuffer::HBU_STATIC);
+
+	Ogre::MeshPtr planeMesh = Ogre::MeshManager::getSingleton().createManual(
+		"Plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+
+	planeMesh->importV1(planeMeshV1.get(), true, true, true);
+
+	{
+		Ogre::Item *item = mpSceneMgr->createItem(planeMesh, Ogre::SCENE_DYNAMIC);
+		item->setDatablock("Marble");
+		Ogre::SceneNode *sceneNode = mpSceneMgr->getRootSceneNode(Ogre::SCENE_DYNAMIC)->
+			createChildSceneNode(Ogre::SCENE_DYNAMIC);
+		sceneNode->setPosition(0, -25, 0);
+		sceneNode->attachObject(item);
+
+		//Change the addressing mode of the roughness map to wrap via code.
+		//Detail maps default to wrap, but the rest to clamp.
+		assert(dynamic_cast<Ogre::HlmsPbsDatablock*>(item->getSubItem(0)->getDatablock()));
+		Ogre::HlmsPbsDatablock *datablock = static_cast<Ogre::HlmsPbsDatablock*>(
+			item->getSubItem(0)->getDatablock());
+		//Make a hard copy of the sampler block
+		Ogre::HlmsSamplerblock samplerblock(*datablock->getSamplerblock(Ogre::PBSM_ROUGHNESS));
+		samplerblock.mU = Ogre::TAM_WRAP;
+		samplerblock.mV = Ogre::TAM_WRAP;
+		samplerblock.mW = Ogre::TAM_WRAP;
+		//Set the new samplerblock. The Hlms system will
+		//automatically create the API block if necessary
+		datablock->setSamplerblock(Ogre::PBSM_ROUGHNESS, samplerblock);
+	}
+	//-------------
+	//***
+
+			Ogre::String meshName;
+
+			
+			
+				meshName = "Cube_d.mesh";
+				Ogre::MeshPtr v2Mesh;
+				v2Mesh = Ogre::MeshManager::getSingleton().load(
+					meshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+			Ogre::Item *item = mpSceneMgr->createItem(meshName,
+				Ogre::ResourceGroupManager::
+				AUTODETECT_RESOURCE_GROUP_NAME,
+				Ogre::SCENE_DYNAMIC);
+			
+				item->setDatablock("Rocks");
+			
+
+
+				//item->setDatablock("Rocks");
+			//item->setVisibilityFlags(0x000000001);
+
+			
+				mItemList[meshName] = item;
+			auto mSceneNode = mpSceneMgr->getRootSceneNode(Ogre::SCENE_DYNAMIC)->
+				createChildSceneNode(Ogre::SCENE_DYNAMIC);
+
+			mSceneNode->setPosition(50.0,10.0,10.0);
+			mSceneNode->setScale(10.65f, 10.65f, 10.65f);
+
+			//mSceneNode->roll(Ogre::Radian((Ogre::Real)idx));
+
+			mSceneNode->attachObject(item);
+
+			meshName = "Sphere1000.mesh";
+			Ogre::MeshPtr v2Mesh2;
+			v2Mesh2 = Ogre::MeshManager::getSingleton().load(
+				meshName, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+			Ogre::Item *item2 = mpSceneMgr->createItem(meshName,
+				Ogre::ResourceGroupManager::
+				AUTODETECT_RESOURCE_GROUP_NAME,
+				Ogre::SCENE_DYNAMIC);
+
+			mItemList[meshName] = item2;
+			auto mSceneNode2 = mpSceneMgr->getRootSceneNode(Ogre::SCENE_DYNAMIC)->
+				createChildSceneNode(Ogre::SCENE_DYNAMIC);
+
+			mSceneNode2->setPosition(100.0, 100.0, 10.0);
+			mSceneNode2->setScale(100.65f, 100.65f, 100.65f);
+
+			//mSceneNode->roll(Ogre::Radian((Ogre::Real)idx));
+
+			mSceneNode2->attachObject(item2);			
+			
+	//***
 	APE_LOG_FUNC_LEAVE();
 }
 
@@ -2636,7 +2916,7 @@ template <class id_t>
 Ogre::IndexBufferPacked* ape::Ogre21RenderPlugin::inflateIndexBufferPacked(ape::GeometryIndexedFaceSetParameters parameters, Ogre::VaoManager* vaomgr,
 	Ogre::IndexBufferPacked::IndexType typenum, id_t* buffer)
 {
-	unsigned int idnum = 3 * parameters.faces.faceVectors.size();
+	unsigned int idnum = 3 * parameters.faces.face.size();
 	buffer = reinterpret_cast<id_t*>(OGRE_MALLOC_SIMD(
 		sizeof(id_t) * idnum, Ogre::MEMCATEGORY_GEOMETRY));
 	Ogre::FreeOnDestructor idDtor(buffer);
@@ -2648,7 +2928,7 @@ Ogre::IndexBufferPacked* ape::Ogre21RenderPlugin::inflateIndexBufferPacked(ape::
 			buffer[offset + 0] = parameters.faces.face[i][0];
 			buffer[offset + 1] = parameters.faces.face[i][1];
 			buffer[offset + 2] = parameters.faces.face[i][2];
-			buffer[offset + 4] = parameters.faces.face[i][4];
+			buffer[offset + 3] = parameters.faces.face[i][3];
 		}
 		else
 		{

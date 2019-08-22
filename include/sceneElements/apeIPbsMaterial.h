@@ -58,7 +58,7 @@ namespace ape
 
 		//virtual void setLightRoughnessOffset(float lightRoughnessOffset) = 0;
 
-		//virtual void setF0(ape::Color f0) = 0;
+		virtual void setF0(ape::Color f0) = 0;
 
 		//virtual ape::Color getAlbedo() = 0;
 
@@ -66,7 +66,7 @@ namespace ape
 
 		//virtual float getLightRoughnessOffset() = 0;
 
-		//virtual ape::Color getF0() = 0;
+		virtual ape::Color getF0() = 0;
 
 		virtual void setPath(std::string path) = 0;
 
@@ -114,6 +114,9 @@ namespace ape
 
 		virtual std::string getNormalTexture() = 0;
 
+		virtual void setEmissiveTexture(std::string path) = 0;
+
+		virtual std::string getEmissiveTexture() = 0;
 
 		virtual void setShininess(float shininess) = 0;
 
@@ -126,6 +129,10 @@ namespace ape
 		virtual void setBaseColor(float MetallicRoughness) = 0;
 
 		virtual float getBaseColor() = 0;
+
+		virtual void setReflection(std::string ref) = 0;
+
+		virtual std::string getReflection() = 0;
 
 	};
 }

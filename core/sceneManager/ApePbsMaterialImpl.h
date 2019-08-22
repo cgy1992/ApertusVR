@@ -46,17 +46,17 @@ namespace ape
 
 		void setRoughness(float roughness) override;
 
-		/*void setLightRoughnessOffset(float lightRoughnessOffset) override;
+		//void setLightRoughnessOffset(float lightRoughnessOffset) override;
 
 		void setF0(ape::Color f0) override;
 
-		ape::Color getAlbedo() override;*/
+		//ape::Color getAlbedo() override;
 
 		float getRoughness() override;
 
-		/*float getLightRoughnessOffset() override;
+		//float getLightRoughnessOffset() override;
 
-		ape::Color getF0() override;*/
+		ape::Color getF0() override;
 
 		void setDiffuseColor(ape::Color diffuse) override;
 
@@ -116,7 +116,13 @@ namespace ape
 
 		void Deserialize(RakNet::DeserializeParameters *deserializeParameters) override;
 
+		void setReflection(std::string ref) override;
 
+		std::string getReflection() override;
+
+		void setEmissiveTexture(std::string path) override;
+
+		std::string getEmissiveTexture() override;
 
 	private:
 		ape::EventManagerImpl* mpEventManagerImpl;
@@ -148,6 +154,10 @@ namespace ape
 		float mShininess;
 
 		std::string mPath;
+
+		std::string mReflection;
+
+		std::string mEmissiveTexture;
 	};
 }
 

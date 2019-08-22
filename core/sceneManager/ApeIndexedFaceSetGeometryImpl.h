@@ -63,9 +63,9 @@ namespace ape
 
 		void setHasVertexColors(bool hasVC) override;
 
-		void setUvs(ape::Vector3* &Uvs) override;
+		void setUvs(std::vector<ape::Vector3> &Uvs) override;
 
-		ape::Vector3* getUvs() override;
+		std::vector<ape::Vector3> getUvs() override;
 
 		void setCols(ape::Vector4* &Cols) override;
 
@@ -76,6 +76,10 @@ namespace ape
 		int getIndex() override;
 
 		virtual void attachDataBlock() override;
+
+		virtual bool getHasTangents() override;
+
+		virtual void setHasTangents(bool hastangents) override;
 	
 	private:
 		ape::EventManagerImpl* mpEventManagerImpl;
@@ -102,11 +106,13 @@ namespace ape
 
 		bool mHasVertexColors;
 
-		ape::Vector3* mUvs;
+		std::vector<ape::Vector3> mUvs;
 
 		ape::Vector4* mCols;
 
 		int mIndx;
+
+		bool mHasTangents;
 	};
 }
 

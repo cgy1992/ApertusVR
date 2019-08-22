@@ -125,6 +125,17 @@ std::string ape::PbsMaterialImpl::getNormalTexture()
 	return mNormalTexture;
 }
 
+void ape::PbsMaterialImpl::setEmissiveTexture(std::string path)
+{
+	mEmissiveTexture = path;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_EMISSIVE_TEXTURE));
+}
+
+std::string ape::PbsMaterialImpl::getEmissiveTexture()
+{
+	return mEmissiveTexture;
+}
+
 void ape::PbsMaterialImpl::setShininess(float shininess)
 {
 	mShininess = shininess;
@@ -156,6 +167,17 @@ std::string ape::PbsMaterialImpl::getPath()
 	return mPath;
 }
 
+void ape::PbsMaterialImpl::setReflection(std::string ref)
+{
+	mReflection = ref;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_REFLECTION));
+}
+
+std::string ape::PbsMaterialImpl::getReflection()
+{
+	return mReflection;
+}
+
 //void ape::PbsMaterialImpl::setAlbedo(ape::Color albedo) // nincs
 //{
 //	mAlbedo = albedo;
@@ -174,11 +196,11 @@ void ape::PbsMaterialImpl::setRoughness(float roughness)
 //	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_LIGHTROUGHNESSOFFSET));
 //}
 //
-//void ape::PbsMaterialImpl::setF0(ape::Color f0) // nincs
-//{
-//	mF0 = f0;
-//	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_F0));
-//}
+void ape::PbsMaterialImpl::setF0(ape::Color f0)
+{
+	mF0 = f0;
+	mpEventManagerImpl->fireEvent(ape::Event(mName, ape::Event::Type::MATERIAL_PBS_F0));
+}
 //
 //
 //ape::Color ape::PbsMaterialImpl::getAlbedo() // nincs
@@ -196,10 +218,10 @@ float ape::PbsMaterialImpl::getRoughness()
 //	return mLightRoughnessOffset;
 //}
 //
-//ape::Color ape::PbsMaterialImpl::getF0() /// nincs
-//{
-//	return mF0;
-//}
+ape::Color ape::PbsMaterialImpl::getF0()
+{
+	return mF0;
+}
 
 void ape::PbsMaterialImpl::setShadingMode(std::string shadingMode)
 {

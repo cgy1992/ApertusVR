@@ -171,9 +171,13 @@ namespace ape
 
 		virtual void setHasVertexColors(bool hasVC) = 0;
 
-		virtual void setUvs(ape::Vector3* &Uvs) = 0;
+		virtual bool getHasTangents() = 0;
 
-		virtual ape::Vector3* getUvs() = 0;
+		virtual void setHasTangents(bool hastangents) = 0;
+
+		virtual void setUvs(std::vector<ape::Vector3> &Uvs) = 0;
+
+		virtual std::vector<ape::Vector3> getUvs() = 0;
 
 		virtual void setCols(ape::Vector4* &s) = 0;
 

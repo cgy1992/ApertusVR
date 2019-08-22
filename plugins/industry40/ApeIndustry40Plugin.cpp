@@ -43,6 +43,22 @@ void ape::apeIndustry40Plugin::Init()
 		light->setDiffuseColor(ape::Color(0.6f, 0.6f, 0.6f));
 		light->setSpecularColor(ape::Color(0.6f, 0.6f, 0.6f));
 	}
+	//--
+	if (auto light = std::static_pointer_cast<ape::ILight>(mpSceneManager->createEntity("light3", ape::Entity::LIGHT).lock()))
+	{
+		light->setLightType(ape::Light::Type::DIRECTIONAL);
+		light->setLightDirection(ape::Vector3(0, 1, -1));
+		light->setDiffuseColor(ape::Color(0.6f, 0.6f, 0.6f));
+		light->setSpecularColor(ape::Color(0.6f, 0.6f, 0.6f));
+	}
+	if (auto light = std::static_pointer_cast<ape::ILight>(mpSceneManager->createEntity("light4", ape::Entity::LIGHT).lock()))
+	{
+		light->setLightType(ape::Light::Type::DIRECTIONAL);
+		light->setLightDirection(ape::Vector3(-1, 1, 0));
+		light->setDiffuseColor(ape::Color(0.6f, 0.6f, 0.6f));
+		light->setSpecularColor(ape::Color(0.6f, 0.6f, 0.6f));
+	}
+	//--
 	//mpSceneMakerMacro->makeModel("my2ndcube.mesh");
 	//mpSceneMakerMacro->makeCoordinateSystem();
 	//mpSceneMakerMacro->makeBackground();

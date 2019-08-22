@@ -180,6 +180,8 @@ namespace ape
 
 		std::map<std::string, Ogre::HlmsPbsDatablock*> mPbsDataBlockList;
 
+		std::map<std::string, Ogre::MeshPtr> mMeshPtrList;
+
 		std::vector<Ogre::Camera*> mOgreCameras;
 
 		Ogre::RenderWindow* mpActualRenderwindow;

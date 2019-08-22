@@ -1,13 +1,13 @@
 {
   "assets": [
     {
-      "file": "/plugins/assimpAssetLoader/resources/Cube.gltf",
+      "file": "/plugins/assimpAssetLoader/resources/DamagedHelmet.gltf",
       "mergeAndExportMeshes": false,
       "scale": [ 10, 10, 10 ],
       "position": [ 0, 0, 0 ],
       "orientation": [ 1, 0, 0, 0 ],
       "regenerateNormals": false,
-      "rootNodeName": "Cube"
+      "rootNodeName": "DamagedHelmet"
 
     }
   ]

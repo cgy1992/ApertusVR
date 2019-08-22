@@ -122,33 +122,32 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 		node->setPosition(ape::Vector3(position.x, position.y, position.z));
 		node->setOrientation(ape::Quaternion(rotation.w, rotation.x, rotation.y, rotation.z));
 		node->setScale(ape::Vector3(scaling.x, scaling.y, scaling.z));
-		
+
 		//APE_LOG_DEBUG("nodeName: " << node->getName());
 		for (int i = 0; i < assimpNode->mNumMeshes; i++)
 		{
+
 			int indx = i;
 			mObjectCount++;
 			aiMesh* assimpMesh = mAssimpScenes[assimpSceneID]->mMeshes[assimpNode->mMeshes[i]];
 			std::stringstream meshUniqueName;
 			meshUniqueName << assimpNodeOriginalName << "_" << mObjectCount;
 			assimpMesh->mName = meshUniqueName.str();
-
+			//			
+			const aiMaterial *pAIMaterial = mAssimpScenes[assimpSceneID]->mMaterials[assimpMesh->mMaterialIndex];
+			//
 			if (auto mesh = std::static_pointer_cast<ape::IIndexedFaceSetGeometry>(mpSceneManager->createEntity(meshUniqueName.str(), ape::Entity::GEOMETRY_INDEXEDFACESET).lock()))
 			{
-				const aiMatrix4x4 aiMtransf = mDerivedTransformsByName.find(assimpNode->mName.data)->second;
-				aiMatrix3x3 aiMrot(aiMtransf);
 				ape::GeometryFaces faces = ape::GeometryFaces();
 				faces.faceVectors.resize(assimpMesh->mNumVertices);
 				ape::GeometryCoordinates coordinates = ape::GeometryCoordinates();
 				for (int i = 0; i < assimpMesh->mNumVertices; i++)
 				{
 					aiVector3D assimpVertex = assimpMesh->mVertices[i];
-					aiVector3D assimpVertexTransf = assimpVertex;
-					assimpVertexTransf *= aiMtransf;
 					ape::Vector3 vertexPosition(assimpVertex.x, assimpVertex.y, assimpVertex.z);
-					faces.faceVectors[i].x = assimpVertexTransf.x;
-					faces.faceVectors[i].y = assimpVertexTransf.y;
-					faces.faceVectors[i].z = assimpVertexTransf.z;
+					faces.faceVectors[i].x = assimpVertex.x;
+					faces.faceVectors[i].y = assimpVertex.y;
+					faces.faceVectors[i].z = assimpVertex.z;
 					if (mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 						vertexPosition = (node->getDerivedPosition() + (node->getDerivedOrientation() * vertexPosition)) * mAssimpAssetConfigs[assimpSceneID].scale;
 					coordinates.push_back(vertexPosition.x);
@@ -161,7 +160,7 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					aiFace assimpFace = assimpMesh->mFaces[i];
 					for (int i = 0; i < assimpFace.mNumIndices; i++)
 						indices.push_back(assimpFace.mIndices[i]); 
-					indices.push_back(-1);
+				//	indices.push_back(-1);
 				}
 
 
@@ -186,29 +185,56 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 				mesh->setHasTextureCoords(assimpMesh->HasTextureCoords(0));
 
 				mesh->setHasVertexColors(assimpMesh->HasVertexColors(0));
-				
 
+				mesh->setHasTangents(assimpMesh->HasTangentsAndBitangents());
 
 				if (assimpMesh->HasTextureCoords(0))
 				{
 					aiVector3D *uv = assimpMesh->mTextureCoords[0];
-					std::vector<ape::Vector3*> Vec;
+					std::vector<ape::Vector3> Vec;
 					Vec.resize(assimpMesh->mNumVertices);
-					/*for (int i = 0; i < Vec.size(); i++)
-					{	
-						Vec[i] = new ape::Vector3();
-					}*/
-					ape::Vector3 *apeuv = Vec[0];
+					
+					//for (int i = 0; i < Vec.size(); i+=4)
+					//{
+					//	if (i % 8 == 0)
+					//	{
+					//		Vec[i + 0].x = 0;
+					//		Vec[i + 0].y = 1;
+					//		Vec[i + 1].x = 1;
+					//		Vec[i + 1].y = 0;
+					//		Vec[i + 2].x = 1;
+					//		Vec[i + 2].y = 1;
+					//		Vec[i + 3].x = 0;
+					//		Vec[i + 3].y = 0;
+					//	}
+					//	else
+					//	{
+					//		Vec[i + 0].x = 0;
+					//		Vec[i + 0].y = -1;
+					//		Vec[i + 1].x = -1;
+					//		Vec[i + 1].y = 0;
+					//		Vec[i + 2].x = -1;
+					//		Vec[i + 2].y = -1;
+					//		Vec[i + 3].x = 0;
+					//		Vec[i + 3].y = 0;
+					//	}
+					//	
+					//}
+					
 					for (int i = 0; i < assimpMesh->mNumVertices; i++)
 					{
-						Vec[i] = new ape::Vector3(uv[i].x,uv[i].y,0.0f);
-						//apeuv[i].x = uv[i].x;
-						//apeuv[i].y = uv[i].y;
-						//apeuv[i].z = uv[i].z;
+						//uv[i].NormalizeSafe();
+						//Vec[i] = new ape::Vector3(uv[i].x,uv[i].y,uv[i].z);
+						//Vec[i].x = uv[i].x;
+						//Vec[i].y = uv[i].y;
+						//Vec[i].z = uv[i].z;
+						Vec[i].x = assimpMesh->mTextureCoords[0][i].x;
+						Vec[i].y = assimpMesh->mTextureCoords[0][i].y;
+						Vec[i].z = assimpMesh->mTextureCoords[0][i].z;
 					}
-					//ape::Vector3 *puv = apeuv->[0];
-					apeuv = Vec[0];
-					mesh->setUvs(apeuv);
+					//apeuv = Vec[0];
+					//ape::Vector3 *apeuv = Vec[0];
+					mesh->setUvs(Vec);
 				}
 
 
@@ -273,21 +299,17 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metalness);
 					float roughness = 0.0;
 					asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughness);	
-					float baseColor = 0.0;
-					//asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor);
+					//float baseColor = 0.0;
+					//asssimpMaterial->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_FACTOR, baseColor);//nemtom
 					aiString alphaMode;
 					asssimpMaterial->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode);
-
-					
-
-
 
 					//material->setBaseColorTexture(fileBaseColor.C_Str());
 					//material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
 
 					material->setMetalness(metalness);
 					material->setRoughness(roughness);
-					material->setBaseColor(baseColor);
+					//material->setBaseColor(baseColor);
 					material->setAlphaMode(alphaMode.C_Str());
 
 					
@@ -327,7 +349,40 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 							////APE_LOG_DEBUG("blending REPLACE: " << opacity);
 						}
 					}
-					material->setBaseColor(baseColor);
+					//material->setBaseColor(baseColor);
+					aiString MetRough;
+					/*asssimpMaterial->GetTexture(aiTextureType_UNKNOWN, 0, &MetRough);fölös
+					material->setMetallicRoughnessTexture(MetRough.C_Str());*/
+					aiString fileBaseColor, fileMetallicRoughness;
+					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
+					//std::cout <<fileMetallicRoughness.C_Str() << std::endl;
+					asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
+					//asssimpMaterial->GetTexture(AI_MATKEY_TEXTURE_NORMALS, &fileNormalTex);
+					/*enum aiTextureType type = aiTextureType_DIFFUSE;
+					aiString path;
+					asssimpMaterial->GetTexture(type, 0, &path);
+					material->setPath(path.C_Str());*/
+					aiString reflection;
+					asssimpMaterial->GetTexture(aiTextureType_REFLECTION, 0, &reflection);
+					material->setReflection(reflection.C_Str());
+					aiString emissiveTex;
+					asssimpMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTex);
+					aiString normalTex;
+					asssimpMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &normalTex);
+					/*aiString emissiveTex;
+					asssimpMaterial->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTex);*/
+
+					if (fileBaseColor.length > 0)
+						material->setBaseColorTexture(fileBaseColor.C_Str());
+					if (fileMetallicRoughness.length > 0)
+						material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
+					if (normalTex.length > 0)
+						material->setNormalTexture(normalTex.C_Str());
+					if (emissiveTex.length > 0)
+						material->setEmissiveTexture(emissiveTex.C_Str());
+					
+
+
 					//APE_LOG_DEBUG("createManualMaterial: " << material->getName());
 				}
 				ape::GeometryNormals normals = ape::GeometryNormals();
@@ -336,7 +391,7 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					for (int i = 0; i < assimpMesh->mNumVertices; i++)
 					{
 						aiVector3D assimpNormal = assimpMesh->mNormals[i];
-						assimpNormal *= aiMrot;
+						
 						normals.push_back(assimpNormal.x);
 						normals.push_back(assimpNormal.y);
 						normals.push_back(assimpNormal.z);
@@ -344,11 +399,12 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					//APE_LOG_DEBUG("hasNormal: " << assimpMesh->mName.C_Str());
 				}
 				ape::GeometryTangents tangents = ape::GeometryTangents();
-				//if (assimpMesh->HasTangentsAndBitangents()) //assume that we have corretc tangents in file
+				if (assimpMesh->HasTangentsAndBitangents()) //assume that we have corretc tangents in file
 				{
 					for (int i = 0; i < assimpMesh->mNumVertices; i++)
 					{
 						aiVector3D assimpTangent = assimpMesh->mTangents[i];
+						
 						tangents.push_back(assimpTangent.x);
 						tangents.push_back(assimpTangent.y);
 						tangents.push_back(assimpTangent.z);
@@ -394,10 +450,11 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 					if (auto fileTexture = std::static_pointer_cast<ape::IFileTexture>(mpSceneManager->createEntity(diffuseTextureFileName, ape::Entity::Type::TEXTURE_FILE).lock()))
 					{
 						//fileTexture->setFileName(diffuseTextureFileName);
+						//material->setNormalTexture(diffuseTextureFileName);
 						//material->setPassTexture(fileTexture);
 					}
 				}
-				//------ create the material ?
+				/*//------ create the material ?
 				std::ostringstream texname;
 				aiString szPath;
 				aiGetMaterialString(asssimpMaterial, AI_MATKEY_TEXTURE_DIFFUSE(0), &szPath);
@@ -452,24 +509,15 @@ void ape::AssimpAssetLoaderPlugin::createNode(int assimpSceneID, aiNode* assimpN
 						break;
 					}
 				}
-
+				*/
 				//------
-
-				aiString fileBaseColor, fileMetallicRoughness;
-				asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &fileMetallicRoughness);
-				//std::cout <<fileMetallicRoughness.C_Str() << std::endl;
-				asssimpMaterial->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &fileBaseColor);
 				
-				enum aiTextureType type = aiTextureType_DIFFUSE;
-				aiString path;
-				asssimpMaterial->GetTexture(type, 0, &path);
-				material->setPath(path.C_Str());
-				material->setBaseColorTexture(fileBaseColor.C_Str());
-				material->setMetallicRoughnessTexture(fileMetallicRoughness.C_Str());
+
 				mesh->attachDataBlock();
 				if (!mAssimpAssetConfigs[assimpSceneID].mergeAndExportMeshes)
 					mesh->setParentNode(node);
 				APE_LOG_DEBUG("createIndexedFaceSetGeometry: " << mesh->getName());
+				
 			}
 		}
 	}
@@ -582,7 +630,7 @@ void ape::AssimpAssetLoaderPlugin::readFile(std::string fileName)
 	std::lock_guard<std::mutex> guard(mMutex);
 	if (mpAssimpImporter)
 	{
-		const aiScene* assimpScene = mpAssimpImporter->ReadFile(fileName, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+		const aiScene* assimpScene = mpAssimpImporter->ReadFile(fileName, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_FlipUVs | aiProcess_OptimizeMeshes | aiProcess_GenUVCoords | aiProcess_TransformUVCoords | aiProcess_GenSmoothNormals );
 		if (!assimpScene)
 		{
 			APE_LOG_ERROR("Loading the asset " << fileName << " was failed due to: " << mpAssimpImporter->GetErrorString());
