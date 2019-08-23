@@ -66,6 +66,7 @@ ape::Ogre21RenderPlugin::Ogre21RenderPlugin() //constructor
 	mOgreCameras = std::vector<Ogre::Camera*>();
 	mCameraCountFromConfig = 0;
 	mpActualRenderwindow = nullptr;
+	mSkyBoxMaterial = Ogre::MaterialPtr();
 
 
 	APE_LOG_FUNC_LEAVE();
@@ -189,15 +190,21 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 					break;
 				case ape::Event::Type::MATERIAL_FILE_SETASSKYBOX:
 				{
-					Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName("SkyPostprocess");
-					if (materialPtr.isNull())
-						return;
-					Ogre::Material* material = materialPtr.getPointer();
-					Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-					tex->setCubicTextureName(materialName+".dds", true);
-					tex->setGamma(2.0);
-					material->compile();
-					mpActualWorkSpace->setEnabled(true);
+					if (mSkyBoxMaterial.isNull())
+					{
+						mSkyBoxMaterial = Ogre::MaterialManager::getSingletonPtr()->getByName(materialName);
+					}
+					/*if (mpActualWorkSpace->isValid())
+					{
+						//Ogre::Material* material = materialPtr.getPointer();
+						Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
+						tex->setCubicTextureName(materialName+".dds", true);
+						tex->setGamma(2.0);
+						material->compile();
+						mpActualWorkSpace->setEnabled(true);
+					}*/
+					
+					
 				}
 				break;
 				case ape::Event::Type::MATERIAL_FILE_TEXTURE:
@@ -973,8 +980,8 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 							for (size_t i = 0; i < till; i++)
 							{
 								ogreItem->getSubItem(i)->setDatablock(ogreMaterial);
-								mItemList["Cube_d.mesh"]->setDatablock("Rocks");
-								mItemList["Sphere1000.mesh"]->setDatablock("Rocks");
+								/*mItemList["Cube_d.mesh"]->setDatablock("Rocks");
+								mItemList["Sphere1000.mesh"]->setDatablock("Rocks");*/
 							}
 							
 
@@ -2191,33 +2198,37 @@ void ape::Ogre21RenderPlugin::processEventDoubleQueue()
 												}*///nincs
 												//------------------
 												mpActualRenderwindow = mRenderWindows[camera->getWindow()];
-
+												if (!mSkyBoxMaterial.isNull())
+												{
+													Ogre::CompositorManager2* compositorManager = mpRoot->getCompositorManager2();
+													//Ogre::IdString workspaceName("MyOwnWorkspace");
 												
-												Ogre::IdString workspaceName("MyOwnWorkspace");
-												Ogre::CompositorManager2* compositorManager = mpRoot->getCompositorManager2();
-												if (!compositorManager->hasWorkspaceDefinition(workspaceName))
-													compositorManager->createBasicWorkspaceDef("MyOwnWorkspace", Ogre::ColourValue(0.6f, 0.0f, 0.6f));
+													//if (!compositorManager->hasWorkspaceDefinition(workspaceName))
+													//	compositorManager->createBasicWorkspaceDef("MyOwnWorkspace", Ogre::ColourValue(0.6f, 0.0f, 0.6f));
 
-												//compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
-												//	"MyOwnWorkspace", true);
-												//compositorManager->addWorkspaceDefinition("WorkSpace01");
-												mpActualWorkSpace = compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
-													"SkyPostprocessWorkspace", true);
-												//asd->setEnabled(false);
+													//compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
+													//	"MyOwnWorkspace", true);
+													//compositorManager->addWorkspaceDefinition("WorkSpace01");
+													mpActualWorkSpace = compositorManager->addWorkspace(mpSceneMgr, mRenderWindows[camera->getWindow()], ogreCamera,
+														"SkyPostprocessWorkspace", true);
+													mpActualWorkSpace->setEnabled(true);
+												}
+												
+												
 												//--------
 												
 												//--------
 												//change sky
-												Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName("SkyPostprocess");
+												/*Ogre::MaterialPtr materialPtr = Ogre::MaterialManager::getSingletonPtr()->getByName("SkyPostprocess");
 												if (materialPtr.isNull())
 													return;
 
 												Ogre::Material* material = materialPtr.getPointer();
 												Ogre::TextureUnitState* tex = material->getTechnique(0)->getPass(0)->getTextureUnitState(0);
-												tex->setCubicTextureName("Teide.dds", true);
+												tex->setCubicTextureName("SkyBoxNone.dds", true);
 												tex->setGamma(2.0);
 												material->compile();
-												mpActualWorkSpace->setEnabled(true);
+												*/
 
 												
 												//--------
@@ -2634,13 +2645,13 @@ void ape::Ogre21RenderPlugin::Init()
 
 	mpRoot->setRenderSystem(renderSystem);
 
-	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/Hlms", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/models", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/modelsV2", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
-	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/PbsMaterials", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
+	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/textures/Cubemaps", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	/*Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/DebugPack.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/packs/cubemap.zip", "Zip", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, true);
@@ -2656,7 +2667,7 @@ void ape::Ogre21RenderPlugin::Init()
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/Compositors", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	//Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/scripts/materials/TutorialSky_Postprocess", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
 	Ogre::ResourceGroupManager::getSingleton().addResourceLocation(mediaFolder.str() + "/apeSky", "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME, false);
-	
+
 	for (auto resourceLocation : mpCoreConfig->getNetworkConfig().resourceLocations)
 		Ogre::ResourceGroupManager::getSingleton().addResourceLocation(resourceLocation, "FileSystem");
 
@@ -2744,7 +2755,7 @@ void ape::Ogre21RenderPlugin::Init()
 
 	//------makessome ground
 	
-
+	/*
 
 
 	Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane("Plane v1",
@@ -2783,7 +2794,7 @@ void ape::Ogre21RenderPlugin::Init()
 	}
 	//-------------
 	//***
-
+	
 			Ogre::String meshName;
 
 			
@@ -2835,7 +2846,7 @@ void ape::Ogre21RenderPlugin::Init()
 			//mSceneNode->roll(Ogre::Radian((Ogre::Real)idx));
 
 			mSceneNode2->attachObject(item2);			
-			
+			*/
 	//***
 	APE_LOG_FUNC_LEAVE();
 }

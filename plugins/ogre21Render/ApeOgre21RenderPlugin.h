@@ -168,7 +168,7 @@ namespace ape
 
 		Ogre::SceneManager* mpSceneMgr;
 
-//		Ogre::v1::OverlaySystem* mpOverlaySys;
+		Ogre::MaterialPtr mSkyBoxMaterial;
 
 		Ogre::CompositorManager2 * mpCompositorManager;
 

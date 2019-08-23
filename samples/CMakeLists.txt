@@ -214,3 +214,8 @@ option(APE_SAMPLES_Polimi "APE_SAMPLES_Polimi?" ON )
 if (${APE_SAMPLES_Polimi})
 	add_subdirectory (polimi)
 endif ()
+
+option(APE_SAMPLES_PhotorealisticScene "APE_SAMPLES_PhotorealisticScene?" ON )
+if (${APE_SAMPLES_PhotorealisticScene})
+	add_subdirectory (photorealisticScene)
+endif ()

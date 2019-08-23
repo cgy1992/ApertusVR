@@ -1,31 +1,31 @@
-#include "apeIndustry40Plugin.h"
+#include "apePhotorealisticScenePlugin.h"
 
-ape::apeIndustry40Plugin::apeIndustry40Plugin()
+ape::apePhotorealisticScenePlugin::apePhotorealisticScenePlugin()
 {
 	APE_LOG_FUNC_ENTER();
 	mpCoreConfig = ape::ICoreConfig::getSingletonPtr();
 	mpEventManager = ape::IEventManager::getSingletonPtr();
-	mpEventManager->connectEvent(ape::Event::Group::CAMERA, std::bind(&apeIndustry40Plugin::eventCallBack, this, std::placeholders::_1));
-	mpEventManager->connectEvent(ape::Event::Group::NODE, std::bind(&apeIndustry40Plugin::eventCallBack, this, std::placeholders::_1));
+	mpEventManager->connectEvent(ape::Event::Group::CAMERA, std::bind(&apePhotorealisticScenePlugin::eventCallBack, this, std::placeholders::_1));
+	mpEventManager->connectEvent(ape::Event::Group::NODE, std::bind(&apePhotorealisticScenePlugin::eventCallBack, this, std::placeholders::_1));
 	mpSceneManager = ape::ISceneManager::getSingletonPtr();
 	mpSceneMakerMacro = new ape::SceneMakerMacro();
 	APE_LOG_FUNC_LEAVE();
 }
 
-ape::apeIndustry40Plugin::~apeIndustry40Plugin()
+ape::apePhotorealisticScenePlugin::~apePhotorealisticScenePlugin()
 {
 	APE_LOG_FUNC_ENTER();
-	mpEventManager->disconnectEvent(ape::Event::Group::CAMERA, std::bind(&apeIndustry40Plugin::eventCallBack, this, std::placeholders::_1));
-	mpEventManager->disconnectEvent(ape::Event::Group::NODE, std::bind(&apeIndustry40Plugin::eventCallBack, this, std::placeholders::_1));
+	mpEventManager->disconnectEvent(ape::Event::Group::CAMERA, std::bind(&apePhotorealisticScenePlugin::eventCallBack, this, std::placeholders::_1));
+	mpEventManager->disconnectEvent(ape::Event::Group::NODE, std::bind(&apePhotorealisticScenePlugin::eventCallBack, this, std::placeholders::_1));
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::eventCallBack(const ape::Event& event)
+void ape::apePhotorealisticScenePlugin::eventCallBack(const ape::Event& event)
 {
 
 }
 
-void ape::apeIndustry40Plugin::Init()
+void ape::apePhotorealisticScenePlugin::Init()
 {
 	APE_LOG_FUNC_ENTER();
 	//mpSceneMakerMacro->makeLit();
@@ -59,16 +59,25 @@ void ape::apeIndustry40Plugin::Init()
 		light->setSpecularColor(ape::Color(0.6f, 0.6f, 0.6f));
 	}
 	//--
-	mpSceneMakerMacro->makeModel("mycube.mesh");
+	
+	std::size_t found = mpCoreConfig->getConfigFolderPath().find("ogre_mesh");
+	if (found != std::string::npos)
+		mpSceneMakerMacro->makeModel("mycube.mesh");
 	//mpSceneMakerMacro->makeCoordinateSystem();
 	//mpSceneMakerMacro->makeBackground();
+	
 	//mpSceneMakerMacro->makeGround();
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::Run()
+void ape::apePhotorealisticScenePlugin::Run()
 {
 	APE_LOG_FUNC_ENTER();
+	if (auto skyBoxMaterial = std::static_pointer_cast<ape::IFileMaterial>(mpSceneManager->createEntity("SkyPostprocess", ape::Entity::MATERIAL_FILE).lock()))
+	{
+		skyBoxMaterial->setFileName("SkyPostprocess");
+		skyBoxMaterial->setAsSkyBox();
+	}
 	while (true)
 	{
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
@@ -76,25 +85,25 @@ void ape::apeIndustry40Plugin::Run()
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::Step()
+void ape::apePhotorealisticScenePlugin::Step()
 {
 	APE_LOG_FUNC_ENTER();
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::Stop()
+void ape::apePhotorealisticScenePlugin::Stop()
 {
 	APE_LOG_FUNC_ENTER();
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::Suspend()
+void ape::apePhotorealisticScenePlugin::Suspend()
 {
 	APE_LOG_FUNC_ENTER();
 	APE_LOG_FUNC_LEAVE();
 }
 
-void ape::apeIndustry40Plugin::Restart()
+void ape::apePhotorealisticScenePlugin::Restart()
 {
 	APE_LOG_FUNC_ENTER();
 	APE_LOG_FUNC_LEAVE();

@@ -2,7 +2,8 @@
   "plugins": [
     "apeOgre21RenderPlugin",
     "apeOisUserInputPlugin",
-    "apeIndustry40Plugin"
+    "apePhotorealisticScenePlugin",
+    "apeAssimpAssetLoaderPlugin"
   ],
   "network": {
     "user": "cave",

@@ -176,6 +176,7 @@ if (${APE_PLUGIN_Industry40})
 	add_subdirectory (industry40)
 endif ()
 
+
 # Apis, servers
 
 option(APE_PLUGIN_JsAPI "Use JsAPIPlugin?" ON )
@@ -243,4 +244,8 @@ endif ()
 option(APE_PLUGIN_PolimiPlugin "Use PolimiPlugin?" ON )
 if (${APE_PLUGIN_PolimiPlugin})
 	add_subdirectory (polimi)
+endif ()
+option(APE_PLUGIN_PhotorealisticScene "Use PhotorealisticScenePlugin?" ON )
+if (${APE_PLUGIN_PhotorealisticScene})
+	add_subdirectory (photorealisticScene)
 endif ()
