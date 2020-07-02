@@ -1,4 +1,5 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(1879,5): warning : The referenced project '..\..\..\ApertusVR-build\Include{D12F9F89-F156-3F2D-BB28-AD9D321679B9}' does not exist.
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(391,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (apeColor_test.vcxproj).  This can lead to incorrect clean and rebuild behavior.
 cl : Command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
   pch.cpp
 c:\apertusvr-build\packages\microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.0\build\native\include\gtest\internal\gtest-port.h(996): warning C4996: 'std::tr1': warning STL4002: The non-Standard std::tr1 namespace and TR1-only machinery are deprecated and will be REMOVED. You can define _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING to acknowledge that you have received this warning.
@@ -52,5 +53,5 @@ c:\apertusvr-build\packages\microsoft.googletest.v140.windesktop.msvcstl.static.
               T=std::tuple<>
           ]
 cl : Command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  test.cpp
-  apeColor_test.vcxproj -> C:\ApertusVR-build\x64\Debug\apeColor_test.exe
+  apeColor_test.cpp
+  apeColor_test.vcxproj -> C:\ApertusVR-build\x64\Debug\include_test.exe
