@@ -29,18 +29,44 @@ SOFTWARE.*/
 
 namespace ape
 {
+	//! A struct
+	/*!
+		A struct for storing and handling colors.
+	*/
 	struct Color
 	{
+		//! Four floats
+		/*!
+			Four floats for storing the data of the colors: r for red, g for green, b for blue and
+			a for alpha
+		*/
 		float r, g, b, a;
 
+		//! Default constructor
+		/*!
+		  The default constructor creates black color, so r=g=b=0 and a = 1
+		*/
 		Color() :
 			r(0.0f), g(0.0f), b(0.0f), a(1.0f)
 		{}
 
+		//! Constructor
+		/*!
+		  Constructor for creating colors with any given value.
+		  \param r a float for red, must be provided
+		  \param g a float for green, must be provided
+		  \param b a float for blue, must be provided
+		  \param a a float for alpha, optional, default value: 1.0
+		*/
 		Color(float _r, float _g, float _b, float _a = 1.0f) :
 			r(_r), g(_g), b(_b), a(_a)
 		{}
 
+		//! A function to get the color in string format
+		/*!
+		 It returns a string which contains: "Color( r: value_of_r, g: value_of_g, b: value_of_b,
+			a: value_of_a )"
+		*/
 		std::string toString() const
 		{
 			std::ostringstream buff;
@@ -48,6 +74,11 @@ namespace ape
 			return buff.str();
 		}
 
+		//! A function to get the color in json format
+		/*!
+		 It returns a string which contains: "{ "r": value_of_r, "g": value_of_g, "b": value_of_b,
+			"a": value_of_a }"
+		*/
 		std::string toJsonString() const
 		{
 			std::ostringstream buff;
@@ -60,26 +91,36 @@ namespace ape
 			return buff.str();
 		}
 
+		//! A function that return the r float
 		float getR()
 		{
 			return r;
 		}
 
+		//! A function that return the G float
 		float getG()
 		{
 			return g;
 		}
 
+		//! A function that return the B float
 		float getB()
 		{
 			return b;
 		}
 
+		//! A function that return the A float
 		float getA()
 		{
 			return a;
 		}
 
+		//! A function for writing the color into a file
+		/*!
+		  It writes the size optionally into the file, after that it writes the value of r, b, g, a respectively
+		  \param fileStreamOut an std::ofstream, which points to the file the color should be written in
+		  \param writeSize a bool, if true the size will be written in the beginning of the file
+		*/
 		void write(std::ofstream& fileStreamOut, bool writeSize = true)
 		{
 			if (writeSize)
@@ -93,6 +134,11 @@ namespace ape
 			fileStreamOut.write(reinterpret_cast<char*>(&a), sizeof(float));
 		}
 
+		//! A function for reading the color from a file
+		/*!
+		  It reads the  the value of r, b, g, a respectively from a file
+		  \param fileStreamOut an std::ifstream, which points to the file that we want to read from
+		*/
 		void read(std::ifstream& fileStreamIn)
 		{
 			fileStreamIn.read(reinterpret_cast<char*>(&r), sizeof(float));
@@ -103,6 +149,7 @@ namespace ape
 
 	};
 
+	//! An alias for creating vectors of color
 	typedef std::vector < ape::Color > ColorVector;
 }
 
