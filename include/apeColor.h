@@ -29,7 +29,6 @@ SOFTWARE.*/
 
 namespace ape
 {
-	//! A struct
 	/*!
 		A struct for storing and handling colors.
 	*/
@@ -44,7 +43,7 @@ namespace ape
 
 		//! Default constructor
 		/*!
-		  The default constructor creates black color, so r=g=b=0 and a = 1
+		  The default constructor creates black color: r=g=b=0 and a = 1
 		*/
 		Color() :
 			r(0.0f), g(0.0f), b(0.0f), a(1.0f)

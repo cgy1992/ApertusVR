@@ -27,23 +27,39 @@ SOFTWARE.*/
 
 namespace ape
 {
+	/*!
+		A struct for storing and handling degrees.
+	*/
 	struct Degree
 	{
+		//! A float for storing and handling the degrees
 		float degree;
 
+		//! Default constructor
+		/*!
+		  The default constructor creates a 0 degree
+		*/
 		Degree() :
 			degree(0.0f)
 		{}
 
+
+		//! Constructor
+		/*!
+			A constructor for creating a degree with any value
+			\param _degree the value of the degree, must be given
+		*/
 		Degree(float _degree) :
 			degree(_degree)
 		{}
 
+		//! A function that returns the radian of the degree in float
 		float toRadian() const
 		{
 			return float(degree * ape_PI / 180);
 		};
 
+		//! A function that return the degree
 		float getDegree()
 		{
 			return degree;
