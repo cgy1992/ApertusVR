@@ -30,53 +30,96 @@ SOFTWARE.*/
 
 namespace ape
 {
+	//! A class
+	/*!
+	  A class that creates a doublequeue for any T type
+	*/
 	template<typename T>
 	class DoubleQueue
 	{
 	private:
+
+		/*!
+		  A T type vector for push operations
+		*/
 		std::vector<T> mPush;
 
+		/*!
+		  A T type vector for pop operations
+		*/
 		std::vector<T> mPop;
 
+		/*!
+		  A mutex for protecting the data in the doublequeue
+		*/
 		std::mutex mPushMutex;
 
 	public:
+
+		//! Default constructor
+		/*!
+		  The default constructor creates an empty doublequeue
+		*/
 		DoubleQueue() : mPush(std::vector<T>()), mPop(std::vector<T>())
 		{
 		}
 
+		//! Destructor
+		/*!
+		  The destructor clears both mPush and mPop
+		*/
 		~DoubleQueue()
 		{
 			mPush.clear();
 			mPop.clear();
 		}
+
+		/*!
+		  A void function for swapping the content of mPush and mPop
+		*/
 		void swap()
 		{
 			std::lock_guard<std::mutex> lock(mPushMutex);
 			mPush.swap(mPop);
 		}
 
+		/*!
+		  A bool function that returns true only if both mPop and mPush are empty
+		*/
 		bool empty()
 		{
 			return emptyPop() && emptyPush();
 		}
 
+		/*!
+		  A bool function that returns true only if mPop is empty
+		*/
 		bool emptyPop()
 		{
 			return mPop.empty();
 		}
 
+		/*!
+		  A bool function that returns true only if mPush is empty
+		*/
 		bool emptyPush()
 		{
 			std::lock_guard<std::mutex> lock(mPushMutex);
 			return mPush.empty();
 		}
 
+		/*!
+		  A T type function that return the first element from mPop if it is not empty 
+		*/
 		T front()
 		{
 			return mPop.empty() ? T() : (*mPop.begin());
 		}
 
+		/*!
+		  A void function that pushes an element at the end of mPush, if APE_DOUBLEQUEUE_UNIQUE
+		  is defined than it only pushes the element if the queue does not already contain it
+		*/
 		void push(T elem)
 		{
 			std::lock_guard<std::mutex> lock(mPushMutex);
@@ -90,6 +133,9 @@ namespace ape
 #endif
 		}
 
+		/*!
+		  A void function that erases the first element of mPop, if it is not empty
+		*/
 		void pop()
 		{
 			if (!mPop.empty())
@@ -98,21 +144,35 @@ namespace ape
 			}
 		}
 
+		/*!
+		  A size_t type function that return the size of mPop plus the size of mPush
+		*/
 		size_t size()
 		{
 			return mPop.size() + mPush.size();
 		}
 
+		/*!
+		  A size_t type function that return the size of mPop
+		*/
 		size_t sizePop()
 		{
 			return mPop.size();
 		}
 
+		/*!
+		  A size_t type function that return the size of mPush
+		*/
 		size_t sizePush()
 		{
 			return mPush.size();
 		}
 
+		/*!
+		  Overloading the = operator so it puts the content of the other doublequeue into this
+		  dequeue
+		  \param other a reference to a doublequeue
+		*/
 		DoubleQueue& operator =(const DoubleQueue& other)
 		{
 			mPush = other.mPush;
