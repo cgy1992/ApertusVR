@@ -27,23 +27,44 @@ SOFTWARE.*/
 
 namespace ape
 {
+	/*!
+	A struct for storing degrees in radian
+	*/
 	struct Radian
 	{
+		/*!
+		A float for storing the radian
+		*/
 		float radian;
 
+		//! Default constructor
+		/*!
+		The default constructor creates a radian with 0 as value
+		*/
 		Radian() :
 			radian(0.0f)
 		{}
 
+		//!Constructor
+		/*!
+		A constructor for creating radian with any value
+		\param _radian a float that will be the value of the radian
+		*/
 		Radian(float _radian) :
 			radian(_radian)
 		{}
 
+		/*!
+		A float function that returns the degree of the radian
+		*/
 		float toDegree() const
 		{
 			return float(radian * 180 / ape_PI);
 		};
 
+		/*!
+		A float function that returns the radian
+		*/
 		float getRadian()
 		{
 			return radian;

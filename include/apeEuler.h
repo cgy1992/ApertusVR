@@ -29,6 +29,9 @@ SOFTWARE.*/
 
 namespace ape
 {
+	/*!
+	A struct for storing and handling Eurel angles and operations
+	*/
 	struct Euler
 	{
 		ape::Radian m_yaw;

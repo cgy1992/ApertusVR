@@ -1,4 +1,5 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(1879,5): warning : The referenced project '..\..\..\ApertusVR-build\Include{D12F9F89-F156-3F2D-BB28-AD9D321679B9}' does not exist.
 cl : Command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  apeDoubleQueue_test.cpp
+  apeRadian_test.cpp
+c:\apertusvr\tests\include_tests\aperadian_test.cpp(18): warning C4305: 'argument': truncation from 'double' to 'float'
   include_tests.vcxproj -> C:\ApertusVR-build\x64\Debug\include_tests.exe

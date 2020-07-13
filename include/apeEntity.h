@@ -30,9 +30,15 @@ SOFTWARE.*/
 
 namespace ape
 {
+	/*!
+	A class for handling entities in ape
+	*/
 	class Entity
 	{
 	public:
+		/*!
+		An enumeration that contains all the possible type names for entities
+		*/
 		enum Type
 		{
 			LIGHT,
@@ -64,20 +70,42 @@ namespace ape
 		};
 
 	protected:
+		//!Constructor
+		/*!
+		Creates an entity with the given name and type
+		\param name is a string, that will be the name of the entity
+		\param type is a Type, it defines the type of the entity
+		*/
 		Entity(std::string name, Type type) : mName(name), mType(type) {};
 
+		/*!
+		A virtual destructor
+		*/
 		virtual ~Entity() {};
 
+		/*!
+		A string for storing the name of the entity
+		*/
 		std::string mName;
 
+		/*!
+		A Type for storing the type of the entity
+		*/
 		Type mType;
 
 	public:
+
+		/*!
+		A string function that returns the name of the entity
+		*/
 		std::string getName()
 		{
 			return mName;
 		};
 
+		/*!
+		A Type function that returns the type of the entity
+		*/
 		Type getType()
 		{
 			return mType;
