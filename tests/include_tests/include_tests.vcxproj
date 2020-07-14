@@ -39,8 +39,8 @@
     <ClCompile Include="apeColor_test.cpp" />
     <ClCompile Include="apeDegree_test.cpp" />
     <ClCompile Include="apeDoubleQueue_test.cpp" />
-    <ClCompile Include="apeEntity_test.cpp" />
     <ClCompile Include="apeRadian_test.cpp" />
+    <ClCompile Include="apeVector3_test.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
