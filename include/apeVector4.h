@@ -29,36 +29,67 @@ namespace ape
 {
 	struct Vector4
 	{
+		/*!
+		3 floats for stroing the x,y,z, w coordinate data
+		*/
 		float x, y, z, w;
 
+
+		//! Default constructor
+		/*!
+		Creates a vector with x=y=z=w=0
+		*/
 		Vector4() :
 			x(0.0f), y(0.0f), z(0.0f), w(0.0f)
 		{}
 
+		//!Constructor
+		/*!
+		For creating a vector with any float value
+		\param _x is a float that will be the value of x
+		\param _y is a float that will be the value of y
+		\param _z is a float that will be the value of z
+		\param _w is a float that will be the value of w
+		*/
 		Vector4(float _x, float _y, float _z, float _w) :
 			x(_x), y(_y), z(_z), w(_w)
 		{}
 
+		/*!
+		A float function that returns the vector's x value.
+		*/
 		float getX()
 		{
 			return x;
 		}
 
+		/*!
+		A float function that returns the vector's y value.
+		*/
 		float getY()
 		{
 			return y;
 		}
 
+		/*!
+		A float function that returns the vector's z value.
+		*/
 		float getZ()
 		{
 			return z;
 		}
 
+		/*!
+		A float function that returns the vector's w value.
+		*/
 		float getW()
 		{
 			return w;
 		}
 
+		/*!
+		A std::string function that returns the vector in string format.
+		*/
 		std::string toString() const
 		{
 			std::ostringstream buff;
@@ -66,6 +97,9 @@ namespace ape
 			return buff.str();
 		}
 
+		/*!
+		A std::string function that returns the vector in json format.
+		*/
 		std::string toJsonString() const
 		{
 			std::ostringstream buff;
@@ -78,6 +112,9 @@ namespace ape
 			return buff.str();
 		}
 
+		/*!
+		A function that returns the vector converted to std::vector<float>.
+		*/
 		std::vector<float> toVector() const
 		{
 			std::vector<float> vec{ x, y, z, w};
