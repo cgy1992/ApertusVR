@@ -37,7 +37,7 @@ namespace ape
 	struct Vector3
 	{
 		/*!
-		3 floats for stroing the x,y,z data
+		3 floats for stroing the x,y,z coordinate data
 		*/
 		float x, y, z;
 

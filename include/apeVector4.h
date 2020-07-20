@@ -93,7 +93,7 @@ namespace ape
 		std::string toString() const
 		{
 			std::ostringstream buff;
-			buff << x << ", " << y << ", " << z << std::endl;
+			buff << x << ", " << y << ", " << z << ", " << w << std::endl;
 			return buff.str();
 		}
 
