@@ -39,6 +39,7 @@
     <ClCompile Include="apeColor_test.cpp" />
     <ClCompile Include="apeDegree_test.cpp" />
     <ClCompile Include="apeDoubleQueue_test.cpp" />
+    <ClCompile Include="apeMatrix3_test.cpp" />
     <ClCompile Include="apeRadian_test.cpp" />
     <ClCompile Include="apeVector3_test.cpp" />
     <ClCompile Include="apeVector4_test.cpp" />
