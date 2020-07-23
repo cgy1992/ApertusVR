@@ -33,48 +33,95 @@ SOFTWARE.*/
 
 namespace ape
 {
+	//! A struct for storing and handling quaternions
 	struct Quaternion
 	{
+		//! Float numbers for storing the quaternion's data, but only the real numbers
 		float w, x, y, z;
 
+
+		//! Default constructor
+		/*!
+		It creates a quaternion with w=1.0, x=y=z=0.0
+		*/
 		Quaternion() :
 			w(1.0f), x(0.0f), y(0.0f), z(0.0f)
 		{}
 
+		//! Constructor
+		/*!
+		Creates a quaternion with the given float values
+		\param _w will be the value of w
+		\param _x will be the value of x
+		\param _y will be the value of y
+		\param _z will be the value of z
+		*/
 		Quaternion(float _w, float _x, float _y, float _z) :
 			w(_w), x(_x), y(_y), z(_z)
 		{}
 
+		//! Constructor
+		/*!
+		Creates a quaternion from a degree and a Vector3
+		\param _degRot is an ape::Degree reference
+		\param _axRost is an ape::Vector3 reference
+		*/
 		Quaternion(const ape::Degree& _degRot, const ape::Vector3& _axRot)
 		{
 			FromAngleAxis(ape::Radian(_degRot.toRadian()), _axRot);
 		}
 
+		//! Constructor
+		/*!
+		Creates a quaternion from a radian and a Vector3
+		\param _radRot is an ape::Radian reference
+		\param _axRost is an ape::Vector3 reference
+		*/
 		Quaternion(const ape::Radian& _radRot, const ape::Vector3& _axRot)
 		{
 			FromAngleAxis(_radRot, _axRot);
 		}
 
+		//! Constructor
+		/*!
+		Creates a quaternion from a 3*3 matrix
+		\param m3x3 is an ape::Matrix3 reference
+		*/
 		Quaternion(const ape::Matrix3& m3x3)
 		{
 			FromRotationMatrix(m3x3);
 		}
 
+		/*!
+		Overloading the + operator, so it adds two quaternions coordinate by coordinate
+		\param rkQ is a reference to the Quaternion that will be added
+		*/
 		Quaternion operator+ (const Quaternion& rkQ) const
 		{
 			return Quaternion(w + rkQ.w, x + rkQ.x, y + rkQ.y, z + rkQ.z);
 		}
 
+		/*!
+		Overloading the - operator, so it subtracts two quaternions coordinate by coordinate
+		\param rkQ is a reference to the Quaternion that will be subtracted
+		*/
 		Quaternion operator- (const Quaternion& rkQ) const
 		{
 			return Quaternion(w - rkQ.w, x - rkQ.x, y - rkQ.y, z - rkQ.z);
 		}
 
+		/*!
+		Overloading the - operator, so it multiplies all values with -1
+		*/
 		Quaternion operator- () const
 		{
 			return Quaternion(-w, -x, -y, -z);
 		}
 
+		/*!
+		Overloading the / operator, so it divides all values with the given float value
+		\param fScalar is the float the quaternion will be divided with
+		*/
 		Quaternion operator / (const float fScalar) const
 		{
 			return Quaternion(
@@ -84,6 +131,10 @@ namespace ape
 			           z / fScalar);
 		}
 
+		/*!
+		Overloading the * operator, so it multiplies the quaternion with a vector3
+		\param v is a reference to the vector3 the quaternion will be multiplied with
+		*/
 		ape::Vector3 operator* (const ape::Vector3& v) const
 		{
 			ape::Vector3 uv, uuv;
@@ -95,16 +146,30 @@ namespace ape
 			return v + uv + uuv;
 		}
 
+		/*!
+		Overloading the < operator, so it returns true only if coordinate by coordinate all
+		values of the other quaternion are smaller
+		\param rkQ is a reference to the other Quaternion
+		*/
 		bool operator < (const Quaternion& rkQ) const
 		{
 			return (w < rkQ.w && x < rkQ.x && y < rkQ.y && z < rkQ.z);
 		}
 
+		/*!
+		Overloading the > operator, so it returns true only if coordinate by coordinate all
+		values of the other quaternion are bigger
+		\param rkQ is a reference to the other Quaternion
+		*/
 		bool operator > (const Quaternion& rkQ) const
 		{
 			return (w > rkQ.w  && x > rkQ.x && y > rkQ.y && z > rkQ.z);
 		}
 
+		/*!
+		A function that multiplies 2 quaternions
+		\param rkQ is a reference to a Quaternion
+		*/
 		Quaternion product(const Quaternion& rkQ) const
 		{
 			return Quaternion(
@@ -114,11 +179,20 @@ namespace ape
 				w * rkQ.z + z * rkQ.w + x * rkQ.y - y * rkQ.x);
 		}
 
+		/*!
+		Overloading the * operator, so it multiplies the quaternion with another quaternion
+		\param rkQ is a reference to a quaternion
+		*/
 		Quaternion operator* (const Quaternion& rkQ) const
 		{
 			return product(rkQ);
 		}
 
+		/*!
+		Creates a quaternion from a radian (angle) and a vector3 (axis)
+		\param _angleRadian is an ape::Radian
+		\param _axid is an ape::Vector3
+		*/
 		void FromAngleAxis(ape::Radian _angleRadian, const ape::Vector3& _axis)
 		{
 			float fHalfAngle((float)(0.5 * _angleRadian.radian));
@@ -129,6 +203,10 @@ namespace ape
 			z = fSin * _axis.z;
 		}
 
+		/*
+		Creates a quaternion from a 3*3 matrix
+		\param kRot is an ape::Matrix3 reference
+		*/
 		void FromRotationMatrix(const ape::Matrix3& kRot)
 		{
 			float fTrace = kRot[0][0] + kRot[1][1] + kRot[2][2];
@@ -164,6 +242,10 @@ namespace ape
 			}
 		}
 
+		/*
+		Returns true only if all coodinates are equal to the other quaternion's appropiate
+		coordinates
+		*/
 		bool equals(const ape::Quaternion& _q2, ape::Radian _tolerance)
 		{
 			/*float fCos = w * _q2.w + x * _q2.x + y * _q2.y + z * _q2.z;
@@ -172,11 +254,17 @@ namespace ape
 			return (_q2.x == x) && (_q2.y == y) && (_q2.z == z) && (_q2.w == w);
 		}
 
+		/*!
+		Returns sum of the squared coordinates
+		*/
 		float Norm() const
 		{
 			return w * w + x * x + y * y + z * z;
 		}
 
+		/*!
+		Normalises the quaternion and returns the square of the length
+		*/
 		float normalise()
 		{
 			float len = Norm();
@@ -188,9 +276,12 @@ namespace ape
 			return len;
 		}
 
+		/*!
+		Returns the inverse of the normalised quaternion
+		*/
 		Quaternion Inverse() const
 		{
-			float fNorm = w * w + x * x + y * y + z * z;
+			float fNorm = Norm();
 			if (fNorm > 0.0)
 			{
 				float fInvNorm = 1.0f / fNorm;
@@ -202,11 +293,21 @@ namespace ape
 			}
 		}
 
+		/*!
+		Returns the dot product of 2 quaternions
+		\param rkQ is a reference to a Quaternion
+		*/
 		float Dot(const Quaternion& rkQ) const
 		{
 			return w * rkQ.w + x * rkQ.x + y * rkQ.y + z * rkQ.z;
 		}
 
+		/*!
+		Calculates the spherical linear interpolation on the quaternion
+		\param fT is the interpolation parameter between 0 and 1
+		\param rkP and rkQ are the 2 quaternions between which the interpolation will be calculated
+		\param shortestPath determines whether to calculate the shortest path
+		*/
 		static Quaternion Slerp(float fT, const Quaternion& rkP,
 		                        const Quaternion& rkQ, bool shortestPath)
 		{
@@ -240,6 +341,10 @@ namespace ape
 			}
 		}
 
+		/*!
+		Converts the quaternion into a 3*3 matrix
+		\param kRot is an ape::Matrix3 reference, the quaternion will be converted into this
+		*/
 		void ToRotationMatrix(ape::Matrix3& kRot) const
 		{
 			float fTx = x + x;
@@ -266,11 +371,16 @@ namespace ape
 			kRot[2][2] = 1.0f - (fTxx + fTyy);
 		}
 
+		//! Returns w
 		float getW() { return w; }
+		//! Returns x
 		float getX() { return x; }
+		//! Returns y
 		float getY() { return y; }
+		//! Returns z
 		float getZ() { return z; }
 
+		//! Retruns the quaternion converted to string fromat
 		std::string toString() const
 		{
 			std::ostringstream buff;
@@ -278,6 +388,7 @@ namespace ape
 			return buff.str();
 		}
 
+		//! Retruns the quaternion converted to json format
 		std::string toJsonString() const
 		{
 			std::ostringstream buff;
@@ -285,12 +396,18 @@ namespace ape
 			return buff.str();
 		}
 
+		//! Retruns the quaternion converted to std::vector<float>
 		std::vector<float> toVector() const
 		{
 			std::vector<float> vec{ w, x, y, z };
 			return vec;
 		}
 
+		/*!
+		Writes the quaternion's data into the given file
+		\param fileStreamOut is a reference to the file
+		\param writeSize determines whether the size should be written too
+		*/
 		void write(std::ofstream& fileStreamOut, bool writeSize = true)
 		{
 			if (writeSize)
@@ -304,6 +421,10 @@ namespace ape
 			fileStreamOut.write(reinterpret_cast<char*>(&z), sizeof(float));
 		}
 
+		/*!
+		Reads the quaternion's data from the given file
+		\param fileStreamIn is a reference to the file
+		*/
 		void read(std::ifstream& fileStreamIn)
 		{
 			fileStreamIn.read(reinterpret_cast<char*>(&w), sizeof(float));
