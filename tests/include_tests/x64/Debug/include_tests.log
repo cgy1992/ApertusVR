@@ -1,5 +1,36 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\Microsoft.Common.CurrentVersion.targets(1879,5): warning : The referenced project '..\..\..\ApertusVR-build\Include{D12F9F89-F156-3F2D-BB28-AD9D321679B9}' does not exist.
 cl : Command line warning D9035: option 'Gm' has been deprecated and will be removed in a future release
-  apeMatrix3_test.cpp
-c:\apertusvr\tests\include_tests\apematrix3_test.cpp(203): warning C4305: 'initializing': truncation from 'double' to 'float'
+  apeQuaternion_test.cpp
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(41): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(42): warning C4244: 'argument': conversion from 'double' to 'RawType', possible loss of data
+          with
+          [
+              RawType=float
+          ]
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(52): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(53): warning C4244: 'argument': conversion from 'double' to 'RawType', possible loss of data
+          with
+          [
+              RawType=float
+          ]
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(70): warning C4244: 'argument': conversion from 'double' to 'RawType', possible loss of data
+          with
+          [
+              RawType=float
+          ]
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(78): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(79): warning C4244: 'argument': conversion from 'double' to 'RawType', possible loss of data
+          with
+          [
+              RawType=float
+          ]
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(80): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(89): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(90): warning C4244: 'argument': conversion from 'double' to 'RawType', possible loss of data
+          with
+          [
+              RawType=float
+          ]
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(91): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+c:\apertusvr\tests\include_tests\apequaternion_test.cpp(188): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
   include_tests.vcxproj -> C:\ApertusVR-build\x64\Debug\include_tests.exe
