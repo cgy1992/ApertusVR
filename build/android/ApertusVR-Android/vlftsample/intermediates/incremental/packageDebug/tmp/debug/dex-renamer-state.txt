@@ -1,4 +1,4 @@
-#Tue Aug 11 15:08:24 CEST 2020
+#Mon Aug 17 10:49:12 CEST 2020
 path.3=classes_1.dex
 path.2=classes_0.dex
 path.1=classes.dex

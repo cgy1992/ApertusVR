@@ -30,26 +30,25 @@
 20-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:11:9-54
 21        android:supportsRtl="true"
 21-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:12:9-35
-22        android:testOnly="true"
-23        android:theme="@style/AppTheme" >
-23-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:13:9-40
-24        <activity
-24-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:14:9-21:20
-25            android:name="org.apertusvr.vlftsample.MainActivity"
-25-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:14:19-47
-26            android:screenOrientation="sensorLandscape" >
-26-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:15:13-56
-27            <intent-filter>
-27-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:16:13-20:29
-28                <action android:name="android.intent.action.MAIN" />
-28-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:17:17-69
-28-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:17:25-66
-29
-30                <category android:name="android.intent.category.LAUNCHER" />
-30-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:19:17-77
-30-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:19:27-74
-31            </intent-filter>
-32        </activity>
-33    </application>
-34
-35</manifest>
+22        android:theme="@style/AppTheme" >
+22-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:13:9-40
+23        <activity
+23-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:14:9-21:20
+24            android:name="org.apertusvr.vlftsample.MainActivity"
+24-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:14:19-47
+25            android:screenOrientation="sensorLandscape" >
+25-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:15:13-56
+26            <intent-filter>
+26-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:16:13-20:29
+27                <action android:name="android.intent.action.MAIN" />
+27-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:17:17-69
+27-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:17:25-66
+28
+29                <category android:name="android.intent.category.LAUNCHER" />
+29-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:19:17-77
+29-->C:\ApertusVR\androidx\apertusvr-android\vlftsample\src\main\AndroidManifest.xml:19:27-74
+30            </intent-filter>
+31        </activity>
+32    </application>
+33
+34</manifest>

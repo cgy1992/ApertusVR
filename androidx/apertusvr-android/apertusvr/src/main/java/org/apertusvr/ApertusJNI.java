@@ -186,8 +186,17 @@ public final class ApertusJNI {
     static native void setSphereGeometryParentNode(String nativeSphere, String parentNode);
     static native void setSphereGeometryMaterial(String nativeSphere, String material);
     static native String getSphereGeometryMaterial(String nativeSphere);
-    static native void setSphereGeometryOwner(String nativeSphere);
+    static native void setSphereGeometryOwner(String nativeSphere, String ownerID);
     static native String getSphereGeometryOwner(String nativeSphere);
+
+    /* --- CylinderGeometry --- */
+    static native void setCylinderGeometryParameters(String nativeSphere, float radius, float height, float tile);
+    static native @Size(3) float[] getCylinderGeometryParameters(String nativeSphere);
+    static native void setCylinderGeometryParentNode(String nativeSphere, String parentNode);
+    static native void setCylinderGeometryMaterial(String nativeSphere, String material);
+    static native String getCylinderGeometryMaterial(String nativeSphere);
+    static native void setCylinderGeometryOwner(String nativeSphere, String ownerID);
+    static native String getCylinderGeometryOwner(String nativeSphere);
 
     /* --- Material --- */
     static native int getMaterialCullingMode(String nativeMaterial);
