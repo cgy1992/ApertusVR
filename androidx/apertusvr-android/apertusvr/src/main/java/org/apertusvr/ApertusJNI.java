@@ -180,6 +180,15 @@ public final class ApertusJNI {
     static native void setConeGeometryOwner(String nativeCone, String ownerID);
     static native String getConeGeometryOwner(String nativeCone);
 
+    /* --- SphereGeometry --- */
+    static native void setSphereGeometryParameters(String nativeSphere, float radius, float tileX, float tileY);
+    static native @Size(3) float[] getSphereGeometryParameters(String nativeSphere);
+    static native void setSphereGeometryParentNode(String nativeSphere, String parentNode);
+    static native void setSphereGeometryMaterial(String nativeSphere, String material);
+    static native String getSphereGeometryMaterial(String nativeSphere);
+    static native void setSphereGeometryOwner(String nativeSphere);
+    static native String getSphereGeometryOwner(String nativeSphere);
+
     /* --- Material --- */
     static native int getMaterialCullingMode(String nativeMaterial);
     static native int getMaterialManualCullingMode(String nativeMaterial);
@@ -235,4 +244,6 @@ public final class ApertusJNI {
 
     /* --- Config --- */
     public static native String getConfigFolderPath();
+
+
 }

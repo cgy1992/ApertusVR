@@ -1,0 +1,13 @@
+#Tue Aug 11 15:08:24 CEST 2020
+path.3=classes_1.dex
+path.2=classes_0.dex
+path.1=classes.dex
+path.0=classes.dex
+renamed.3=classes4.dex
+renamed.2=classes3.dex
+renamed.1=classes2.dex
+renamed.0=classes.dex
+base.3=c\:\\ApertusVR\\build\\android\\ApertusVR-Android\\vlftsample\\intermediates\\dex\\debug\\mergeLibDexDebug\\classes_1.dex
+base.2=c\:\\ApertusVR\\build\\android\\ApertusVR-Android\\vlftsample\\intermediates\\dex\\debug\\mergeLibDexDebug\\classes_0.dex
+base.1=c\:\\ApertusVR\\build\\android\\ApertusVR-Android\\vlftsample\\intermediates\\dex\\debug\\mergeProjectDexDebug\\classes.dex
+base.0=c\:\\ApertusVR\\build\\android\\ApertusVR-Android\\vlftsample\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex

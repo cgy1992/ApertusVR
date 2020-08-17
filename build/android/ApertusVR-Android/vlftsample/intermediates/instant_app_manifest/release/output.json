@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "applicationId": "org.apertusvr.vlftsample",
+  "variantType": "BASE_APK",
+  "elements": [
+    {
+      "outputType": {
+        "type": "INSTANT_APP_MANIFEST"
+      },
+      "apkData": {
+        "type": "MAIN",
+        "splits": [],
+        "versionCode": 1,
+        "versionName": "1.0",
+        "outputFile": "vlftsample-release.apk",
+        "fullName": "release",
+        "baseName": "release",
+        "dirName": ""
+      },
+      "path": "AndroidManifest.xml",
+      "properties": {
+        "packageId": "org.apertusvr.vlftsample",
+        "split": "",
+        "minSdkVersion": "23"
+      }
+    }
+  ]
+}

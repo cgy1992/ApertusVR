@@ -35,6 +35,7 @@ set(SOURCES
         apeJNIFileMaterial.cpp
         apeJNIManualMaterial.cpp
         apeJNIFileTexture.cpp
+	apeJNISphereGeometry.cpp
         )
 
 set(HEADERS
