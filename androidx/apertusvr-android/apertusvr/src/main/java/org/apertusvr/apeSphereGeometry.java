@@ -27,7 +27,7 @@ public class apeSphereGeometry extends apeGeometry {
     }
 
     public apeSphereGeometry(String name) {
-        super(name, Type.GEOMETRY_CONE);
+        super(name, Type.GEOMETRY_SPHERE);
     }
 
     public void setParameters(float radius,  apeVector2 tile) {

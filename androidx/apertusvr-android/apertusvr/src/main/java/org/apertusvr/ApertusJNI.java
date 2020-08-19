@@ -190,13 +190,25 @@ public final class ApertusJNI {
     static native String getSphereGeometryOwner(String nativeSphere);
 
     /* --- CylinderGeometry --- */
-    static native void setCylinderGeometryParameters(String nativeSphere, float radius, float height, float tile);
-    static native @Size(3) float[] getCylinderGeometryParameters(String nativeSphere);
-    static native void setCylinderGeometryParentNode(String nativeSphere, String parentNode);
-    static native void setCylinderGeometryMaterial(String nativeSphere, String material);
-    static native String getCylinderGeometryMaterial(String nativeSphere);
-    static native void setCylinderGeometryOwner(String nativeSphere, String ownerID);
-    static native String getCylinderGeometryOwner(String nativeSphere);
+    static native void setCylinderGeometryParameters(String nativeCylinder, float radius, float height, float tile);
+    static native @Size(3) float[] getCylinderGeometryParameters(String nativeCylinder);
+    static native void setCylinderGeometryParentNode(String nativeCylinder, String parentNode);
+    static native void setCylinderGeometryMaterial(String nativeCylinder, String material);
+    static native String getCylinderGeometryMaterial(String nativeCylinder);
+    static native void setCylinderGeometryOwner(String nativeCylinder, String ownerID);
+    static native String getCylinderGeometryOwner(String nativeCylinder);
+
+    /* --- TextGeometry --- */
+    static native void setTextGeometryCaption(String nativeText, String caption);
+    static native String getTextGeometryCaption(String nativeText);
+    static native void clearTextGeometryCaption(String nativeText);
+    static native boolean isTextGeometryVisible(String nativeText);
+    static native void setTextGeometryVisible(String nativeText, boolean enabled);
+    static native void setTextGeometryParentNode(String nativeText, String parentID);
+    static native void showTextGeometryOnTop(String nativeText,boolean show);
+    static native boolean isTextGeometryShownOnTop(String nativeText);
+    static native void setTextGeometryOwner(String nativeText, String ownerID);
+    static native String getTextGeometryOwner(String nativeText);
 
     /* --- Material --- */
     static native int getMaterialCullingMode(String nativeMaterial);
