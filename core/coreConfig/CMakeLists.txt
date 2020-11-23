@@ -40,6 +40,8 @@ if(ANDROID)
 	add_library (apeAndroidAssetOpen SHARED apeAndroidAssetOpen.h apeAndroidAssetOpen.cpp)
 	target_link_libraries(apeAndroidAssetOpen ${android-lib})
 	target_link_libraries (apeCoreConfig apeAndroidAssetOpen)
+elseif(MACOS)
+	add_library (apeCoreConfig SHARED ${SOURCES} ${HEADERS})
 endif()
 
 # Place target xxx into the specified folder in IDEs supporting it

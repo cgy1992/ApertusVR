@@ -8,23 +8,25 @@ if(NOT ANDROID)
 	set (ZIP_INSTALL_DIR ${CMAKE_BINARY_DIR}/zip/install)
 	set (ZIP_READY FALSE)
 
+	
 	# find zip
 	if (WIN32)
 		message (STATUS "zip: prepare on Windows")
 		set(ZIP_STATIC_LIB_PATH_DEBUG "${ZIP_BUILD_DIR}/Debug/zip.lib")
 		set(ZIP_STATIC_LIB_PATH_RELEASE "${ZIP_BUILD_DIR}/Release/zip.lib")
+	elseif(APPLE)
+		message (STATUS "zip: prepare on Apple")
+		set(ZIP_STATIC_LIB_PATH_DEBUG "${ZIP_BUILD_DIR}/Debug/libzip.a")
+		set(ZIP_STATIC_LIB_PATH_RELEASE "${ZIP_BUILD_DIR}/Release/libzip.a")
 	endif ()
 
 	message (STATUS "zip: ZIP_STATIC_LIB_PATH_DEBUG: ${ZIP_STATIC_LIB_PATH_DEBUG}")
 	message (STATUS "zip: ZIP_STATIC_LIB_PATH_RELEASE: ${ZIP_STATIC_LIB_PATH_RELEASE}")
 
-	if (EXISTS ${ZIP_STATIC_LIB_PATH_DEBUG} AND EXISTS ${ZIP_STATIC_LIB_PATH_RELEASE})
-		set(ZIP_READY TRUE)
-		message (STATUS "zip is installed" )
-	else ()
-		set(ZIP_READY FALSE)
-		message (STATUS "zip is not installed" )
-	endif ()
+	set(ZIP_READY FALSE)
+	message (STATUS "zip is not installed" )
+
+
 
 	if (NOT ZIP_READY)
 		# build zip

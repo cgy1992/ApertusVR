@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.1)
+project(filament_build)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++-7)
+set(CMAKE_VERBOSE_MAKEFILE on )
+
+set(SRC main.mm)
+set(LIB_PATH ${CMAKE_SOURCE_DIR}/plugins/render/filamentRenderMac/lib/x86_64/)
+
+find_package (Threads)
+
+set(LIBS filament backend bluegl bluevk filabridge filaflat utils geometry smol-v ibl)
+add_executable(filament_build ${SRC})
+
+foreach(lib ${LIBS})
+        add_library(${lib} STATIC IMPORTED)
+        set_target_properties(${lib} PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/plugins/render/filamentRenderMac/lib/x86_64/lib${lib}.a)
+        target_link_libraries(filament_build ${lib} "-framework Cocoa -framework Metal -framework CoreVideo")
+endforeach()
+target_link_libraries(filament_build pthread c++ dl)
+target_include_directories(filament_build PUBLIC ./include)
